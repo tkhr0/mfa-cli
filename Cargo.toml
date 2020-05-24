@@ -1,0 +1,5 @@
+[package]
+name = "mfa-cli"
+version = "0.1.0"
+authors = ["tkhr0 <tkhr.karasawa@gmail.com>"]
+edition = "2018"
