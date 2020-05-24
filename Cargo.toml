@@ -3,3 +3,9 @@ name = "mfa-cli"
 version = "0.1.0"
 authors = ["tkhr0 <tkhr.karasawa@gmail.com>"]
 edition = "2018"
+
+[dependencies]
+generic-array = "0.14.1"
+hmac = "0.7.1"
+sha1 = "0.6.0"
+digest = "0.8.1"
