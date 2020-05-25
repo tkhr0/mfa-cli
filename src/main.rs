@@ -59,7 +59,7 @@ fn main() {
             println!("{}", code);
             process::exit(0);
         }
-        _ => {}
+        _ => println!("{}", args.usage()),
     }
 }
 
