@@ -36,39 +36,65 @@ fn main() {
             }
             _ => {}
         },
+        ("show", Some(show_args)) => {
+            let profile_name = show_args.value_of("profile_name").unwrap();
+            let profile = match config.find_by_name(&profile_name) {
+                Some(profile) => profile,
+                None => panic!("can't find that profile: {}", profile_name),
+            };
+            let secret = match base32::decode(
+                base32::Alphabet::RFC4648 { padding: true },
+                profile.get_secret(),
+            ) {
+                Some(secret) => secret,
+                None => {
+                    // TODO: 設定ファイルが空の時
+                    panic!("can't load secret for that profile: {}", profile_name)
+                }
+            };
+            let code = match totp::totp(&secret) {
+                Ok(code) => code,
+                Err(err) => panic!(err),
+            };
+            println!("{}", code);
+            process::exit(0);
+        }
         _ => {}
     }
-
-    let raw_secret = "AAAAAAA";
-
-    // TODO: 設定ファイルが空の時
-    let secret = base32::decode(base32::Alphabet::RFC4648 { padding: true }, raw_secret).unwrap();
-    let code = totp::totp(&secret);
-
-    println!("{:?}", code.unwrap());
 }
 
 // オプション
 fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
-    App::new("awskey").subcommand(
-        SubCommand::with_name("profile")
-            .about("profile settings")
-            .subcommand(
-                SubCommand::with_name("add")
-                    .about("Add a new profile")
-                    .help("Add a new profile")
-                    .arg(
-                        Arg::with_name("account_name")
-                            .takes_value(true)
-                            .required(true)
-                            .help("account name"),
-                    )
-                    .arg(
-                        Arg::with_name("key")
-                            .takes_value(true)
-                            .required(true)
-                            .help("secret"),
-                    ),
-            ),
-    )
+    App::new("awskey")
+        .subcommand(
+            SubCommand::with_name("profile")
+                .about("profile settings")
+                .subcommand(
+                    SubCommand::with_name("add")
+                        .about("Add a new profile")
+                        .help("Add a new profile")
+                        .arg(
+                            Arg::with_name("account_name")
+                                .takes_value(true)
+                                .required(true)
+                                .help("account name"),
+                        )
+                        .arg(
+                            Arg::with_name("key")
+                                .takes_value(true)
+                                .required(true)
+                                .help("secret"),
+                        ),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("show")
+                .about("Show MFA code for the profile")
+                .arg(
+                    Arg::with_name("profile_name")
+                        .takes_value(true)
+                        .required(true)
+                        .help("profile name"),
+                ),
+        )
 }

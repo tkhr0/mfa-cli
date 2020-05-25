@@ -50,9 +50,9 @@ impl Config {
         self.profiles.push(profile)
     }
 
-    fn find_by_name(&self, name: String) -> Option<&Profile> {
+    pub fn find_by_name(&self, name: &str) -> Option<&Profile> {
         for profile in &self.profiles {
-            if *profile.get_name() == name {
+            if *profile.get_name() == *name {
                 return Some(&profile);
             }
         }
@@ -78,6 +78,10 @@ impl Profile {
 
     pub fn get_name(&self) -> &String {
         &self.name
+    }
+
+    pub fn get_secret(&self) -> &String {
+        &self.secret
     }
 }
 
