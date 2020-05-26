@@ -36,13 +36,20 @@ impl Config {
     }
 
     // 設定ファイルを読み込む
-    pub fn restore(path: &String) -> Result<Config, io::Error> {
-        let mut file = File::open(path)?;
+    pub fn restore(path: &String) -> Result<Config, String> {
+        let mut file = match File::open(path) {
+            Ok(file) => file,
+            Err(err) => return Err(err.to_string()),
+        };
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer)?;
+        if let Err(err) = file.read_to_end(&mut buffer) {
+            return Err(err.to_string());
+        };
 
-        let config = toml::from_slice(&buffer).unwrap();
-        Ok(config)
+        match toml::from_slice(&buffer) {
+            Ok(config) => return Ok(config),
+            Err(err) => return Err(err.to_string()),
+        }
     }
 
     pub fn push_profile(&mut self, profile: Profile) {

@@ -14,7 +14,10 @@ fn main() {
     };
     let config = match config::Config::restore(&config_file_path) {
         Ok(config) => config,
-        Err(_) => panic!("failed to restore config"), // TODO: safe exit
+        Err(err) => {
+            println!("{}", err);
+            config::Config::new()
+        }
     };
 
     let args = build_option_parser().get_matches();
@@ -29,7 +32,8 @@ fn main() {
                 let mut config = config;
                 config.push_profile(profile);
                 if let Err(_) = config.dump(&config_file_path) {
-                    panic!("failed to dump config");
+                    eprintln!("failed to dump config");
+                    process::exit(3);
                 };
                 println!("added new profile");
                 process::exit(0);
@@ -40,7 +44,10 @@ fn main() {
             let profile_name = show_args.value_of("profile_name").unwrap();
             let profile = match config.find_by_name(&profile_name) {
                 Some(profile) => profile,
-                None => panic!("can't find that profile: {}", profile_name),
+                None => {
+                    eprintln!("can't find that profile: {}", profile_name);
+                    process::exit(4);
+                }
             };
             let secret = match base32::decode(
                 base32::Alphabet::RFC4648 { padding: true },
@@ -49,7 +56,8 @@ fn main() {
                 Some(secret) => secret,
                 None => {
                     // TODO: 設定ファイルが空の時
-                    panic!("can't load secret for that profile: {}", profile_name)
+                    eprintln!("can't load secret for that profile: {}", profile_name);
+                    process::exit(5);
                 }
             };
             let code = match totp::totp(&secret) {
