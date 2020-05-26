@@ -5,7 +5,9 @@ extern crate mfa_cli;
 use clap::{App, Arg, SubCommand};
 use mfa_cli::config;
 use mfa_cli::totp;
+use std::io::{self, Write};
 use std::process;
+use std::{thread, time};
 
 fn main() {
     let config_file_path = match config::initialize() {
@@ -42,6 +44,11 @@ fn main() {
         },
         ("show", Some(show_args)) => {
             let profile_name = show_args.value_of("profile_name").unwrap();
+            let is_watch = if 0 < show_args.occurrences_of("watch") {
+                true
+            } else {
+                false
+            };
             let profile = match config.find_by_name(&profile_name) {
                 Some(profile) => profile,
                 None => {
@@ -60,11 +67,23 @@ fn main() {
                     process::exit(5);
                 }
             };
-            let code = match totp::totp(&secret) {
-                Ok(code) => code,
-                Err(err) => panic!(err),
-            };
-            println!("{}", code);
+
+            loop {
+                let code = match totp::totp(&secret) {
+                    Ok(code) => code,
+                    Err(err) => panic!(err),
+                };
+                print!("{}", code);
+                io::stdout().flush().unwrap();
+
+                if is_watch {
+                    thread::sleep(time::Duration::from_secs(1));
+                    print!("\r");
+                } else {
+                    print!("\n");
+                    break;
+                }
+            }
             process::exit(0);
         }
         _ => println!("{}", args.usage()),
@@ -98,6 +117,12 @@ fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
         .subcommand(
             SubCommand::with_name("show")
                 .about("Show MFA code for the profile")
+                .arg(
+                    Arg::with_name("watch")
+                        .short("-w")
+                        .long("--watch")
+                        .help("After showing code, watch for changes"),
+                )
                 .arg(
                     Arg::with_name("profile_name")
                         .takes_value(true)

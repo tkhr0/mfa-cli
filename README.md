@@ -10,6 +10,10 @@ $ mfa-cli profile add PROFILE_NAME SECRET_CODE
 $ mfa-cli show PROFILE_NAME
 123456
 
+# After showing code, watch for changes
+$ mfa-cli show -w PROFILE_NAME
+123456
+
 # Show help
 $ mfa-cli help
 ```
