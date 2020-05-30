@@ -22,9 +22,7 @@ pub fn hotp(secret: &[u8], counter: &[u8]) -> Result<String, String> {
     };
     let sbits = truncate(hmac);
 
-    let code = sbits % 1000000_u32; // TODO: dynamic digits
-
-    Ok(format!("{:06}", code))
+    Ok(bit_to_decimal_code(sbits))
 }
 
 // Dynamic Truncate
@@ -39,6 +37,13 @@ fn truncate(hmac: GenericArray<u8, OutputSize>) -> u32 {
         | (((hmac[offset + 2] as u32) & 0xff) << 8)
         | ((hmac[offset + 3] as u32) & 0xff);
     result
+}
+
+// HMAC-SHA-1 を指定の桁に丸め込む
+fn bit_to_decimal_code(sbits: u32) -> String {
+    let code = sbits % 1000000_u32; // TODO: dynamic digits
+
+    format!("{:06}", code)
 }
 
 #[test]
