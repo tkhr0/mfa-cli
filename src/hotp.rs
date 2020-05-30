@@ -15,14 +15,14 @@ type OutputSize = U20;
 /// Step 3: Compute an HOTP value
 /// Let Snum  = StToNum(Sbits)   // Convert S to a number in 0...2^{31}-1
 /// Return D = Snum mod 10^Digit //  D is a number in the range 0...10^{Digit}-1
-pub fn hotp(secret: &[u8], counter: &[u8]) -> Result<String, String> {
+pub fn hotp(secret: &[u8], counter: &[u8], digits: u8) -> Result<String, String> {
     let hmac = match hmac_sha1::gen_hmac_sha1(secret, counter) {
         Ok(hmac) => hmac,
         Err(err) => return Err(err),
     };
     let sbits = truncate(hmac);
 
-    Ok(bit_to_decimal_code(sbits))
+    bit_to_decimal_code(sbits, digits)
 }
 
 // Dynamic Truncate
@@ -40,10 +40,26 @@ fn truncate(hmac: GenericArray<u8, OutputSize>) -> u32 {
 }
 
 // HMAC-SHA-1 を指定の桁に丸め込む
-fn bit_to_decimal_code(sbits: u32) -> String {
-    let code = sbits % 1000000_u32; // TODO: dynamic digits
+fn bit_to_decimal_code(sbits: u32, digits: u8) -> Result<String, String> {
+    if digits < 1 || 31 < digits {
+        return Err(format!("The digits is out of range (1~31): {}", digits));
+    }
 
-    format!("{:06}", code)
+    let code = (sbits % 10_u32.pow(digits as u32)).to_string();
+
+    Ok(zero_padding(code, digits as usize))
+}
+
+// 文字を左から 0埋めする
+fn zero_padding(string: String, length: usize) -> String {
+    let mut value = string;
+
+    while value.len() < length {
+        value = format!("0{}", value)
+    }
+
+    value
+}
 }
 
 #[test]
