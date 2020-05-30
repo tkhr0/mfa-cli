@@ -43,27 +43,9 @@ fn truncate(hmac: GenericArray<u8, OutputSize>) -> u32 {
 
 #[test]
 fn truncate_test() {
-    let arr = GenericArray::clone_from_slice(&vec![
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0b1111_1111,
-        0xbb,
-        0xbb,
-        0xbb,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x0a,
+    let arr = GenericArray::from([
+        0x00_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xbb, 0xbb, 0xbb,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x0a,
     ]);
     let result = truncate(arr);
 
