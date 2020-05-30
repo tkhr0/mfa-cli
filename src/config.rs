@@ -24,7 +24,11 @@ impl Config {
         Default::default()
     }
 
-    pub fn push_profile(&mut self, profile: Profile) {
+    pub fn new_profile(&mut self, name: &str, secret: &str) {
+        self.push_profile(Profile::new(name, secret));
+    }
+
+    fn push_profile(&mut self, profile: Profile) {
         // TODO: test name duplication
         self.profiles.push(profile)
     }

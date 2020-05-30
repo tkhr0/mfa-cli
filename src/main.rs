@@ -1,23 +1,20 @@
 extern crate clap;
 extern crate mfa_cli;
 
-use clap::{App, Arg, SubCommand};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use mfa_cli::config;
+use mfa_cli::mfa::Mfa;
 use mfa_cli::totp;
 use std::io::{self, Write};
 use std::process;
 use std::{thread, time};
 
 fn main() {
-    let config_file_path = match config::initialize() {
-        Ok(path) => path,
-        Err(err) => panic!(err), // TODO: safe exit
-    };
-    let config = match config::Config::restore(&config_file_path) {
-        Ok(config) => config,
+    let mut mfa = match Mfa::new() {
+        Ok(mfa) => mfa,
         Err(err) => {
-            println!("{}", err);
-            config::Config::new()
+            eprintln!("failed to initialize: {}", err);
+            process::exit(1);
         }
     };
 
@@ -25,20 +22,7 @@ fn main() {
 
     match args.subcommand() {
         ("profile", Some(profile_args)) => match profile_args.subcommand() {
-            ("add", Some(add_args)) => {
-                let profile = config::Profile::new(
-                    add_args.value_of("account_name").unwrap(),
-                    add_args.value_of("key").unwrap(),
-                );
-                let mut config = config;
-                config.push_profile(profile);
-                if let Err(_) = config.dump(&config_file_path) {
-                    eprintln!("failed to dump config");
-                    process::exit(3);
-                };
-                println!("added new profile");
-                process::exit(0);
-            }
+            ("add", Some(add_args)) => profile_add(&mut mfa, add_args),
             _ => {}
         },
         ("show", Some(show_args)) => {
@@ -126,4 +110,15 @@ fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
                         .help("profile name"),
                 ),
         )
+}
+
+fn profile_add(mfa: &mut Mfa, add_args: &ArgMatches) {
+    let account_name = add_args.value_of("account_name").unwrap();
+    let key = add_args.value_of("key").unwrap();
+    if let Err(err) = mfa.register_profile(account_name, key) {
+        eprintln!("failed to dump config: {}", err);
+        process::exit(3);
+    };
+    println!("Added new profile");
+    process::exit(0);
 }

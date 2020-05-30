@@ -28,6 +28,12 @@ impl Mfa {
         }
     }
 
+    // Build new profile and save.
+    pub fn register_profile(&mut self, account_name: &str, secret: &str) -> Result<(), String> {
+        self.config.new_profile(account_name, secret);
+        self.dump()
+    }
+
     // Dump config to file
     pub fn dump(&self) -> Result<(), String> {
         let config_data = match self.config.serialize() {
