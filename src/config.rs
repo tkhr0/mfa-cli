@@ -4,16 +4,6 @@ extern crate toml;
 
 use serde::Deserialize;
 use serde::Serialize;
-use std::env;
-use std::fs::{DirBuilder, File};
-use std::io;
-use std::io::prelude::*;
-use std::path::PathBuf;
-
-// 設定ファイルのルートディレクトリ
-const SAVE_DIR_NAME: &str = "mfa-cli";
-// 設定ファイル名
-const SAVE_FILE_NAME: &str = "profile";
 
 // 設定
 #[derive(Serialize, Deserialize, Debug)]
@@ -21,36 +11,17 @@ pub struct Config {
     profiles: Vec<Profile>,
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            profiles: Vec::new(),
+        }
+    }
+}
+
 impl Config {
     pub fn new() -> Self {
-        Config { profiles: vec![] }
-    }
-
-    // 設定ファイルに書き出す
-    pub fn dump(&self, path: &String) -> Result<(), io::Error> {
-        let mut file = File::create(path)?;
-        let toml = toml::to_vec(&self).unwrap();
-        file.write_all(&toml)?;
-        file.flush()?;
-
-        Ok(())
-    }
-
-    // 設定ファイルを読み込む
-    pub fn restore(path: &String) -> Result<Config, String> {
-        let mut file = match File::open(path) {
-            Ok(file) => file,
-            Err(err) => return Err(err.to_string()),
-        };
-        let mut buffer = Vec::new();
-        if let Err(err) = file.read_to_end(&mut buffer) {
-            return Err(err.to_string());
-        };
-
-        match toml::from_slice(&buffer) {
-            Ok(config) => return Ok(config),
-            Err(err) => return Err(err.to_string()),
-        }
+        Default::default()
     }
 
     pub fn push_profile(&mut self, profile: Profile) {
@@ -66,6 +37,25 @@ impl Config {
         }
 
         None
+    }
+
+    // Serialize to strings
+    pub fn serialize(&self) -> Result<Vec<u8>, String> {
+        match toml::to_vec(&self) {
+            Ok(data) => Ok(data),
+            Err(err) => Err(err.to_string()),
+        }
+    }
+
+    // Deserialize config from strings
+    pub fn deserialize(&mut self, content: Vec<u8>) -> Result<(), String> {
+        match toml::from_slice(&content) {
+            Ok(config) => {
+                *self = config;
+                return Ok(());
+            }
+            Err(err) => return Err(err.to_string()),
+        }
     }
 }
 
@@ -92,36 +82,4 @@ impl Profile {
     pub fn get_secret(&self) -> Option<Vec<u8>> {
         base32::decode(base32::Alphabet::RFC4648 { padding: true }, &self.secret)
     }
-}
-
-// 初期化処理
-// 設定ディレクトリ・ファイルを作成する
-//
-// XDG_CONFIG_HOME を配置場所とする
-pub fn initialize() -> Result<String, String> {
-    let config_dir = match env::var("XDG_CONFIG_HOME") {
-        Ok(path) => {
-            let mut path = PathBuf::from(path);
-            path.push(SAVE_DIR_NAME);
-            path
-        }
-        Err(err) => return Err(format!("{}", err)),
-    };
-
-    if !config_dir.exists() {
-        DirBuilder::new()
-            .recursive(true)
-            .create(&config_dir)
-            .unwrap();
-    }
-
-    let mut config_path = config_dir.to_path_buf();
-    config_path.push(SAVE_FILE_NAME);
-    if !config_path.exists() {
-        if let Err(_) = File::create(&config_path) {
-            return Err("Can not create config directory.".to_string());
-        }
-    }
-
-    Ok(config_path.to_str().unwrap().to_string())
 }
