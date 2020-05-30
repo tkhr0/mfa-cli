@@ -1,4 +1,3 @@
-extern crate base32;
 extern crate clap;
 extern crate mfa_cli;
 
@@ -56,10 +55,7 @@ fn main() {
                     process::exit(4);
                 }
             };
-            let secret = match base32::decode(
-                base32::Alphabet::RFC4648 { padding: true },
-                profile.get_secret(),
-            ) {
+            let secret = match profile.get_secret() {
                 Some(secret) => secret,
                 None => {
                     // TODO: 設定ファイルが空の時

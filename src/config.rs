@@ -1,3 +1,4 @@
+extern crate base32;
 extern crate serde;
 extern crate toml;
 
@@ -87,8 +88,9 @@ impl Profile {
         &self.name
     }
 
-    pub fn get_secret(&self) -> &String {
-        &self.secret
+    // returns decoded secret
+    pub fn get_secret(&self) -> Option<Vec<u8>> {
+        base32::decode(base32::Alphabet::RFC4648 { padding: true }, &self.secret)
     }
 }
 
