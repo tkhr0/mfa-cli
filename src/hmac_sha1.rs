@@ -77,3 +77,14 @@ fn hmacsha1() {
 
     assert_eq!(to_hex(&code), "780b7ebfa252b52192f25e4e48929f08a8772c72");
 }
+
+#[test]
+fn rfc_4226_hmacsha1_0() {
+    let code = gen_hmac_sha1(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 0]).unwrap();
+    assert_eq!(to_hex(&code), "cc93cf18508d94934c64b65d8ba7667fb7cde4b0")
+}
+#[test]
+fn rfc_4226_hmacsha1_1() {
+    let code = gen_hmac_sha1(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 1]).unwrap();
+    assert_eq!(to_hex(&code), "75a48a19d4cbe100644e8ac1397eea747a2d33ab")
+}
