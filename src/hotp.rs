@@ -60,6 +60,19 @@ fn zero_padding(string: String, length: usize) -> String {
 
     value
 }
+
+#[test]
+fn zero_padding_test() {
+    assert_eq!(zero_padding("1".to_string(), 5), "00001")
+}
+
+#[test]
+fn to_decima_too_small() {
+    assert!(bit_to_decimal_code(0, 0).is_err())
+}
+#[test]
+fn to_decima_too_large() {
+    assert!(bit_to_decimal_code(0, 32).is_err())
 }
 
 #[test]
@@ -95,22 +108,22 @@ fn rfc_4226_truncate_1() {
 
 #[test]
 fn rfc_4226_to_code_2() {
-    assert_eq!(bit_to_decimal_code(0x82fef30), "359152");
+    assert_eq!(bit_to_decimal_code(0x82fef30, 6), Ok("359152".to_string()));
 }
 
 #[test]
 fn rfc_4226_to_code_3() {
-    assert_eq!(bit_to_decimal_code(0x66ef7655), "969429");
+    assert_eq!(bit_to_decimal_code(0x66ef7655, 6), Ok("969429".to_string()));
 }
 
 #[test]
 fn rfc_4226_hotp_4() {
-    let code = hotp(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 4]).unwrap();
-    assert_eq!(code, "338314");
+    let code = hotp(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 4], 6);
+    assert_eq!(code, Ok("338314".to_string()));
 }
 
 #[test]
 fn rfc_4226_hotp_5() {
-    let code = hotp(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 5]).unwrap();
-    assert_eq!(code, "254676");
+    let code = hotp(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 5], 6);
+    assert_eq!(code, Ok("254676".to_string()));
 }
