@@ -10,6 +10,7 @@ const HIDDEN_SAVE_DIR_NAME: &str = ".mfa-cli";
 // 設定ファイル名
 const CONFIG_FILE_NAME: &str = "profile";
 
+#[derive(Debug)]
 pub struct Mfa {
     config: config::Config,
     dump_file: DumpFile,
@@ -32,6 +33,11 @@ impl Mfa {
     pub fn register_profile(&mut self, account_name: &str, secret: &str) -> Result<(), String> {
         self.config.new_profile(account_name, secret);
         self.dump()
+    }
+
+    // Get the decoded secret value with a profile name.
+    pub fn get_secret_by_name(&self, profile_name: &str) -> Option<Vec<u8>> {
+        self.config.get_secret_by_name(profile_name)
     }
 
     // Dump config to file
@@ -78,6 +84,7 @@ impl Mfa {
     }
 }
 
+#[derive(Debug)]
 struct DumpFile {
     dir: Box<Path>,
     file_name: &'static str,

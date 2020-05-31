@@ -2,7 +2,6 @@ extern crate clap;
 extern crate mfa_cli;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
-use mfa_cli::config;
 use mfa_cli::mfa::Mfa;
 use mfa_cli::totp;
 use std::io::{self, Write};
@@ -25,47 +24,7 @@ fn main() {
             ("add", Some(add_args)) => profile_add(&mut mfa, add_args),
             _ => {}
         },
-        ("show", Some(show_args)) => {
-            let profile_name = show_args.value_of("profile_name").unwrap();
-            let is_watch = if 0 < show_args.occurrences_of("watch") {
-                true
-            } else {
-                false
-            };
-            let profile = match config.find_by_name(&profile_name) {
-                Some(profile) => profile,
-                None => {
-                    eprintln!("can't find that profile: {}", profile_name);
-                    process::exit(4);
-                }
-            };
-            let secret = match profile.get_secret() {
-                Some(secret) => secret,
-                None => {
-                    // TODO: 設定ファイルが空の時
-                    eprintln!("can't load secret for that profile: {}", profile_name);
-                    process::exit(5);
-                }
-            };
-
-            loop {
-                let code = match totp::totp(&secret) {
-                    Ok(code) => code,
-                    Err(err) => panic!(err),
-                };
-                print!("{}", code);
-                io::stdout().flush().unwrap();
-
-                if is_watch {
-                    thread::sleep(time::Duration::from_secs(1));
-                    print!("\r");
-                } else {
-                    print!("\n");
-                    break;
-                }
-            }
-            process::exit(0);
-        }
+        ("show", Some(show_args)) => show(&mfa, show_args),
         _ => println!("{}", args.usage()),
     }
 }
@@ -120,5 +79,40 @@ fn profile_add(mfa: &mut Mfa, add_args: &ArgMatches) {
         process::exit(3);
     };
     println!("Added new profile");
+    process::exit(0);
+}
+
+fn show(mfa: &Mfa, args: &ArgMatches) {
+    let profile_name = args.value_of("profile_name").unwrap();
+    let is_watch = if 0 < args.occurrences_of("watch") {
+        true
+    } else {
+        false
+    };
+
+    let secret = match mfa.get_secret_by_name(profile_name) {
+        Some(secret) => secret,
+        None => {
+            eprintln!("can't get the secret that profile: {}", profile_name);
+            process::exit(4);
+        }
+    };
+
+    loop {
+        let code = match totp::totp(&secret) {
+            Ok(code) => code,
+            Err(err) => panic!(err),
+        };
+        print!("{}", code);
+        io::stdout().flush().unwrap();
+
+        if is_watch {
+            thread::sleep(time::Duration::from_secs(1));
+            print!("\r");
+        } else {
+            print!("\n");
+            break;
+        }
+    }
     process::exit(0);
 }

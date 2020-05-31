@@ -33,7 +33,16 @@ impl Config {
         self.profiles.push(profile)
     }
 
-    pub fn find_by_name(&self, name: &str) -> Option<&Profile> {
+    // Get the decoded secret value with a profile name.
+    pub fn get_secret_by_name(&self, name: &str) -> Option<Vec<u8>> {
+        if let Some(profile) = self.find_by_name(name) {
+            return profile.get_secret();
+        }
+
+        None
+    }
+
+    fn find_by_name(&self, name: &str) -> Option<&Profile> {
         for profile in &self.profiles {
             if *profile.get_name() == *name {
                 return Some(&profile);
