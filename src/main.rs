@@ -8,6 +8,8 @@ use std::io::{self, Write};
 use std::process;
 use std::{thread, time};
 
+pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 fn main() {
     let mut mfa = match Mfa::new() {
         Ok(mfa) => mfa,
@@ -31,7 +33,8 @@ fn main() {
 
 // オプション
 fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
-    App::new("awskey")
+    App::new("MFA CLI")
+        .version(VERSION)
         .subcommand(
             SubCommand::with_name("profile")
                 .about("profile settings")
