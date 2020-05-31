@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: Cache cargo registry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo index
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo build
+      uses: actions/cache@v1
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release --all-features
+    - name: zip
+      run: zip mfa-cli.zip target/release/mfa-cli
+    - uses: actions/upload-artifact@v2
+      with:
+        name: mfa-cli-release-${{ github.sha }}
+        path: mfa-cli.zip
+
+  create-release:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: ${{ github.ref }}
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: mfa-cli-release-${{ github.sha }}
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`.
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./mfa-cli.zip
+          asset_name: mfa-cli.zip
+          asset_content_type: application/zip
