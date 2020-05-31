@@ -87,3 +87,39 @@ impl Profile {
         base32::decode(base32::Alphabet::RFC4648 { padding: true }, &self.secret)
     }
 }
+
+#[test]
+fn serialize_profile() {
+    let profile = Profile::new("test", "secret");
+    let expected = b"name = \"test\"\nsecret = \"secret\"\n";
+
+    assert_eq!(toml::to_vec(&profile).unwrap(), expected);
+}
+
+#[test]
+fn serialize_config() {
+    let config = Config {
+        profiles: vec![Profile::new("test", "secret")],
+    };
+    let expected = r#"[[profiles]]
+name = "test"
+secret = "secret"
+"#;
+
+    assert_eq!(
+        String::from_utf8(config.serialize().unwrap()).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn deserialize_config() {
+    let string_config = b"[[profiles]]\nname = \"test\"\nsecret = \"secret\"\n ".to_vec();
+    let mut config = Config::new();
+
+    config.deserialize(string_config).unwrap();
+
+    assert_eq!(config.profiles.len(), 1);
+    assert_eq!(config.profiles[0].name, "test");
+    assert_eq!(config.profiles[0].secret, "secret");
+}

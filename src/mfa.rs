@@ -153,3 +153,15 @@ fn env_home() -> Option<String> {
         _ => return None,
     }
 }
+
+#[test]
+fn dump_file_path() {
+    let dump_file = DumpFile {
+        dir: Path::new("/path/to").to_path_buf().into_boxed_path(),
+        file_name: "file",
+    };
+
+    let path = dump_file.path();
+
+    assert_eq!(*path.as_ref(), *Path::new("/path/to/file"));
+}
