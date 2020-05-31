@@ -65,9 +65,9 @@ impl Config {
         match toml::from_slice(&content) {
             Ok(config) => {
                 *self = config;
-                return Ok(());
+                Ok(())
             }
-            Err(err) => return Err(err.to_string()),
+            Err(err) => Err(err.to_string()),
         }
     }
 }

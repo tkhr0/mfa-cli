@@ -8,7 +8,7 @@ use std::io::{self, Write};
 use std::process;
 use std::{thread, time};
 
-pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
     let mut mfa = match Mfa::new() {
@@ -22,10 +22,11 @@ fn main() {
     let args = build_option_parser().get_matches();
 
     match args.subcommand() {
-        ("profile", Some(profile_args)) => match profile_args.subcommand() {
-            ("add", Some(add_args)) => profile_add(&mut mfa, add_args),
-            _ => {}
-        },
+        ("profile", Some(profile_args)) => {
+            if let ("add", Some(add_args)) = profile_args.subcommand() {
+                profile_add(&mut mfa, add_args)
+            }
+        }
         ("show", Some(show_args)) => show(&mfa, show_args),
         _ => println!("{}", args.usage()),
     }
@@ -87,11 +88,7 @@ fn profile_add(mfa: &mut Mfa, add_args: &ArgMatches) {
 
 fn show(mfa: &Mfa, args: &ArgMatches) {
     let profile_name = args.value_of("profile_name").unwrap();
-    let is_watch = if 0 < args.occurrences_of("watch") {
-        true
-    } else {
-        false
-    };
+    let is_watch = 0 < args.occurrences_of("watch");
 
     let secret = match mfa.get_secret_by_name(profile_name) {
         Some(secret) => secret,
@@ -113,7 +110,7 @@ fn show(mfa: &Mfa, args: &ArgMatches) {
             thread::sleep(time::Duration::from_secs(1));
             print!("\r");
         } else {
-            print!("\n");
+            println!();
             break;
         }
     }

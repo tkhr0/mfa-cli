@@ -9,7 +9,7 @@ const TOTP_DIGITS: u8 = 6;
 pub fn totp(secret: &[u8]) -> Result<String, String> {
     match current_time() {
         Ok(current_time) => gen_totp(secret, current_time, TOTP_DIGITS),
-        Err(err) => return Err(err),
+        Err(err) => Err(err),
     }
 }
 
@@ -57,30 +57,30 @@ fn rfc_6238_1() {
 
 #[test]
 fn rfc_6238_2() {
-    let totp = gen_totp(b"12345678901234567890", 1111111109, 8).unwrap();
+    let totp = gen_totp(b"12345678901234567890", 1_111_111_109, 8).unwrap();
     assert_eq!(totp, "07081804");
 }
 
 #[test]
 fn rfc_6238_3() {
-    let totp = gen_totp(b"12345678901234567890", 1111111111, 8).unwrap();
+    let totp = gen_totp(b"12345678901234567890", 1_111_111_111, 8).unwrap();
     assert_eq!(totp, "14050471");
 }
 
 #[test]
 fn rfc_6238_4() {
-    let totp = gen_totp(b"12345678901234567890", 1234567890, 8).unwrap();
+    let totp = gen_totp(b"12345678901234567890", 1_234_567_890, 8).unwrap();
     assert_eq!(totp, "89005924");
 }
 
 #[test]
 fn rfc_6238_5() {
-    let totp = gen_totp(b"12345678901234567890", 2000000000, 8).unwrap();
+    let totp = gen_totp(b"12345678901234567890", 2_000_000_000, 8).unwrap();
     assert_eq!(totp, "69279037");
 }
 
 #[test]
 fn rfc_6238_6() {
-    let totp = gen_totp(b"12345678901234567890", 20000000000, 8).unwrap();
+    let totp = gen_totp(b"12345678901234567890", 20_000_000_000, 8).unwrap();
     assert_eq!(totp, "65353130");
 }

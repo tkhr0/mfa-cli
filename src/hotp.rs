@@ -93,7 +93,7 @@ fn rfc_4226_truncate_0() {
         0x66, 0x7f, 0xb7, 0xcd, 0xe4, 0xb0,
     ]);
 
-    assert_eq!(truncate(hmac_sha1), 0x4c93cf18);
+    assert_eq!(truncate(hmac_sha1), 0x4c93_cf18);
 }
 
 #[test]
@@ -103,17 +103,20 @@ fn rfc_4226_truncate_1() {
         0xea, 0x74, 0x7a, 0x2d, 0x33, 0xab,
     ]);
 
-    assert_eq!(truncate(hmac_sha1), 0x41397eea);
+    assert_eq!(truncate(hmac_sha1), 0x4139_7eea);
 }
 
 #[test]
 fn rfc_4226_to_code_2() {
-    assert_eq!(bit_to_decimal_code(0x82fef30, 6), Ok("359152".to_string()));
+    assert_eq!(bit_to_decimal_code(0x82f_ef30, 6), Ok("359152".to_string()));
 }
 
 #[test]
 fn rfc_4226_to_code_3() {
-    assert_eq!(bit_to_decimal_code(0x66ef7655, 6), Ok("969429".to_string()));
+    assert_eq!(
+        bit_to_decimal_code(0x66ef_7655, 6),
+        Ok("969429".to_string())
+    );
 }
 
 #[test]

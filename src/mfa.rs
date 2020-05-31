@@ -53,7 +53,7 @@ impl Mfa {
         };
         match file.write_all(&config_data) {
             Ok(()) => Ok(()),
-            Err(err) => return Err(err.to_string()),
+            Err(err) => Err(err.to_string()),
         }
     }
 
@@ -149,15 +149,15 @@ fn fetch_dump_path() -> Box<Path> {
 
 fn env_xdg_config_home() -> Option<String> {
     match env::var("XDG_CONFIG_HOME") {
-        Ok(path) if Path::new(&path).exists() => return Some(path),
-        _ => return None,
+        Ok(path) if Path::new(&path).exists() => Some(path),
+        _ => None,
     }
 }
 
 fn env_home() -> Option<String> {
     match env::var("HOME") {
-        Ok(path) if Path::new(&path).exists() => return Some(path),
-        _ => return None,
+        Ok(path) if Path::new(&path).exists() => Some(path),
+        _ => None,
     }
 }
 
