@@ -17,3 +17,6 @@ $ mfa-cli show -w PROFILE_NAME
 # Show help
 $ mfa-cli help
 ```
+
+## License
+This software is released under the MIT License.
