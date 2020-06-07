@@ -20,10 +20,6 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
     pub fn new_profile(&mut self, name: &str, secret: &str) {
         self.push_profile(Profile::new(name, secret));
     }
@@ -124,7 +120,7 @@ secret = "secret"
 #[test]
 fn deserialize_config() {
     let string_config = b"[[profiles]]\nname = \"test\"\nsecret = \"secret\"\n ".to_vec();
-    let mut config = Config::new();
+    let mut config: Config = Default::default();
 
     config.deserialize(string_config).unwrap();
 
