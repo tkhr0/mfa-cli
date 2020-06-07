@@ -5,6 +5,10 @@ authors = ["tkhr0 <tkhr.karasawa@gmail.com>"]
 edition = "2018"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
+readme = "README.md"
+repository = "https://github.com/tkhr0/mfa-cli/"
+description = "A MFA cli client"
+keywords = ["mfa", "cli", "authentication", "config"]
 
 [lib]
 name = "mfa_cli"
