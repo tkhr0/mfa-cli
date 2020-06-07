@@ -1,5 +1,5 @@
 # MFA-CLI
-A CLI client for MFA (WIP)
+A CLI client for MFA
 
 ## Usage
 ```sh
