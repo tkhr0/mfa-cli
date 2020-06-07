@@ -1,4 +1,5 @@
 use super::config;
+use super::totp;
 use std::env;
 use std::fs::{DirBuilder, File};
 use std::io::prelude::*;
@@ -38,6 +39,17 @@ impl Mfa {
     // Get the decoded secret value with a profile name.
     pub fn get_secret_by_name(&self, profile_name: &str) -> Option<Vec<u8>> {
         self.config.get_secret_by_name(profile_name)
+    }
+
+    // Get the authentication code with a profile name.
+    pub fn get_code_by_name(&self, profile_name: &str) -> Result<String, String> {
+        match self.get_secret_by_name(profile_name) {
+            Some(secret) => totp::totp(secret.as_ref()),
+            None => Err(format!(
+                "can't get the secret that profile: {}",
+                profile_name
+            )),
+        }
     }
 
     // Dump config to file
