@@ -17,6 +17,15 @@ pub struct Mfa {
     dump_file: DumpFile,
 }
 
+impl Default for Mfa {
+    fn default() -> Self {
+        Self {
+            config: Default::default(),
+            dump_file: Default::default(),
+        }
+    }
+}
+
 impl Mfa {
     pub fn new() -> Result<Self, String> {
         let mut this = Self {
@@ -34,6 +43,10 @@ impl Mfa {
     pub fn register_profile(&mut self, account_name: &str, secret: &str) -> Result<(), String> {
         self.config.new_profile(account_name, secret);
         self.dump()
+    }
+
+    pub fn remove_profile(&mut self, profile_name: &str) -> Result<(), String> {
+        self.config.remove_profile(profile_name)
     }
 
     // Get the decoded secret value with a profile name.
@@ -247,4 +260,13 @@ fn fetch_dump_path_from_current_dir() {
 
     let expected = env::current_dir().unwrap().join(".mfa-cli");
     assert_eq!(*fetch_dump_path(), expected);
+}
+
+#[test]
+fn test_remove_profile() {
+    let mut mfa: Mfa = Default::default();
+    mfa.config.new_profile("test", "hoge");
+
+    mfa.remove_profile("test").unwrap();
+    assert!(mfa.get_secret_by_name("test").is_none());
 }
