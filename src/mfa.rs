@@ -201,3 +201,50 @@ fn dump_file_path() {
 
     assert_eq!(*path.as_ref(), *Path::new("/path/to/file"));
 }
+
+#[test]
+fn fetch_dump_path_from_env_my_home_when_that_exists() {
+    let current_dir = env::current_dir().unwrap();
+    let expected = current_dir.join("tests/tmp/mfa-cli");
+    env::set_var("MFA_CLI_CONFIG_HOME", current_dir.join("tests/tmp"));
+
+    assert_eq!(*fetch_dump_path(), *expected);
+}
+
+#[test]
+fn fetch_dump_path_from_env_my_home_when_that_does_not_exist() {
+    let current_dir = env::current_dir().unwrap();
+
+    let expected = current_dir.join("tests/tmp/does_not_exist/mfa-cli");
+    let config_home_path = current_dir.join("tests/tmp/does_not_exist");
+    env::set_var("MFA_CLI_CONFIG_HOME", config_home_path.clone());
+
+    assert_eq!(*fetch_dump_path(), *expected);
+    std::fs::remove_dir(config_home_path).unwrap();
+}
+
+#[test]
+fn fetch_dump_path_from_env_xdg_config_home() {
+    env::remove_var("MFA_CLI_CONFIG_HOME");
+    env::set_var("XDG_CONFIG_HOME", "./tests/tmp");
+    assert_eq!(*fetch_dump_path(), *Path::new("./tests/tmp/mfa-cli"));
+}
+
+#[test]
+fn fetch_dump_path_from_env_home() {
+    env::remove_var("MFA_CLI_CONFIG_HOME");
+    env::remove_var("XDG_CONFIG_HOME");
+
+    env::set_var("HOME", "./tests/tmp");
+    assert_eq!(*fetch_dump_path(), *Path::new("./tests/tmp/.mfa-cli"));
+}
+
+#[test]
+fn fetch_dump_path_from_current_dir() {
+    env::remove_var("MFA_CLI_CONFIG_HOME");
+    env::remove_var("XDG_CONFIG_HOME");
+    env::remove_var("HOME");
+
+    let expected = env::current_dir().unwrap().join(".mfa-cli");
+    assert_eq!(*fetch_dump_path(), expected);
+}
