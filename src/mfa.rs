@@ -139,6 +139,12 @@ impl DumpFile {
 
 // decides directory which dump config file
 fn fetch_dump_path() -> Box<Path> {
+    if let Some(path) = env_my_home() {
+        let mut path = Path::new(&path).to_path_buf();
+        path.push(SAVE_DIR_NAME);
+        return path.into_boxed_path();
+    }
+
     if let Some(path) = env_xdg_config_home() {
         let mut path = Path::new(&path).to_path_buf();
         path.push(SAVE_DIR_NAME);
@@ -157,6 +163,17 @@ fn fetch_dump_path() -> Box<Path> {
     }
 
     panic!("can't find save directory");
+}
+
+fn env_my_home() -> Option<String> {
+    match env::var("MFA_CLI_CONFIG_HOME") {
+        Ok(path) if Path::new(&path).exists() => Some(path),
+        Ok(path) if !Path::new(&path).exists() => {
+            DirBuilder::new().recursive(true).create(&path).unwrap();
+            Some(path)
+        }
+        _ => None,
+    }
 }
 
 fn env_xdg_config_home() -> Option<String> {
