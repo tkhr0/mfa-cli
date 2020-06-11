@@ -23,6 +23,7 @@ fn main() {
 
     match args.subcommand() {
         ("profile", Some(profile_args)) => {
+            // TODO: refactor, using match and write tests
             if let ("add", Some(add_args)) = profile_args.subcommand() {
                 profile_add(&mut mfa, add_args)
             }
@@ -36,6 +37,8 @@ fn main() {
         ("show", Some(show_args)) => show(&mfa, show_args),
         _ => println!("{}", args.usage()),
     }
+
+    // TODO: do exit(0) here.
 }
 
 // オプション
@@ -75,7 +78,7 @@ fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("show")
+            SubCommand::with_name("show") // TODO: change sub command name to "code"
                 .about("Show MFA code for the profile")
                 .arg(
                     Arg::with_name("watch")
