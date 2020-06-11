@@ -38,6 +38,25 @@ impl Config {
         None
     }
 
+    // Remove a profile.
+    pub fn remove_profile(&mut self, name: &str) -> Result<(), String> {
+        let mut index: Option<usize> = None;
+        self.profiles.iter().enumerate().for_each(|(i, profile)| {
+            if profile.name == name {
+                index = Some(i);
+                return;
+            }
+        });
+
+        match index {
+            Some(i) => {
+                self.profiles.remove(i);
+                Ok(())
+            }
+            _ => Err(format!("Can't find this profile: {}", name)),
+        }
+    }
+
     fn find_by_name(&self, name: &str) -> Option<&Profile> {
         for profile in &self.profiles {
             if *profile.get_name() == *name {

@@ -26,6 +26,9 @@ fn main() {
             if let ("add", Some(add_args)) = profile_args.subcommand() {
                 profile_add(&mut mfa, add_args)
             }
+            if let ("remove", Some(remove_args)) = profile_args.subcommand() {
+                profile_remove(&mut mfa, remove_args)
+            }
         }
         ("show", Some(show_args)) => show(&mfa, show_args),
         _ => println!("{}", args.usage()),
@@ -54,6 +57,16 @@ fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
                                 .takes_value(true)
                                 .required(true)
                                 .help("secret"),
+                        ),
+                )
+                .subcommand(
+                    SubCommand::with_name("remove")
+                        .about("Remove any profile")
+                        .arg(
+                            Arg::with_name("profile_name")
+                                .takes_value(true)
+                                .required(true)
+                                .help("Enter a profile name that You want to remove."),
                         ),
                 ),
         )
@@ -84,6 +97,20 @@ fn profile_add(mfa: &mut Mfa, add_args: &ArgMatches) {
     };
     println!("Added new profile");
     process::exit(0);
+}
+
+fn profile_remove(mfa: &mut Mfa, remove_args: &ArgMatches) {
+    let account_name = remove_args.value_of("profile_name").unwrap();
+
+    if let Err(err) = mfa.remove_profile(account_name) {
+        eprintln!("failed remove profile: {}", err);
+        process::exit(5);
+    }
+
+    if let Err(err) = mfa.dump() {
+        eprintln!("failed to dump config: {}", err);
+        process::exit(3);
+    }
 }
 
 fn show(mfa: &Mfa, args: &ArgMatches) {
