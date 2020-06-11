@@ -61,7 +61,7 @@ impl Mfa {
     // Build new profile and save.
     pub fn register_profile(&mut self, account_name: &str, secret: &str) -> Result<(), String> {
         self.config.new_profile(account_name, secret);
-        self.dump()
+        self.dump() // TODO: don't dump here.
     }
 
     // Get all of profile list
