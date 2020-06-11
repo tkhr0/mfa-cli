@@ -139,6 +139,12 @@ impl DumpFile {
 
 // decides directory which dump config file
 fn fetch_dump_path() -> Box<Path> {
+    if let Some(path) = env_my_home() {
+        let mut path = Path::new(&path).to_path_buf();
+        path.push(SAVE_DIR_NAME);
+        return path.into_boxed_path();
+    }
+
     if let Some(path) = env_xdg_config_home() {
         let mut path = Path::new(&path).to_path_buf();
         path.push(SAVE_DIR_NAME);
@@ -157,6 +163,17 @@ fn fetch_dump_path() -> Box<Path> {
     }
 
     panic!("can't find save directory");
+}
+
+fn env_my_home() -> Option<String> {
+    match env::var("MFA_CLI_CONFIG_HOME") {
+        Ok(path) if Path::new(&path).exists() => Some(path),
+        Ok(path) if !Path::new(&path).exists() => {
+            DirBuilder::new().recursive(true).create(&path).unwrap();
+            Some(path)
+        }
+        _ => None,
+    }
 }
 
 fn env_xdg_config_home() -> Option<String> {
@@ -183,4 +200,51 @@ fn dump_file_path() {
     let path = dump_file.path();
 
     assert_eq!(*path.as_ref(), *Path::new("/path/to/file"));
+}
+
+#[test]
+fn fetch_dump_path_from_env_my_home_when_that_exists() {
+    let current_dir = env::current_dir().unwrap();
+    let expected = current_dir.join("tests/tmp/mfa-cli");
+    env::set_var("MFA_CLI_CONFIG_HOME", current_dir.join("tests/tmp"));
+
+    assert_eq!(*fetch_dump_path(), *expected);
+}
+
+#[test]
+fn fetch_dump_path_from_env_my_home_when_that_does_not_exist() {
+    let current_dir = env::current_dir().unwrap();
+
+    let expected = current_dir.join("tests/tmp/does_not_exist/mfa-cli");
+    let config_home_path = current_dir.join("tests/tmp/does_not_exist");
+    env::set_var("MFA_CLI_CONFIG_HOME", config_home_path.clone());
+
+    assert_eq!(*fetch_dump_path(), *expected);
+    std::fs::remove_dir(config_home_path).unwrap();
+}
+
+#[test]
+fn fetch_dump_path_from_env_xdg_config_home() {
+    env::remove_var("MFA_CLI_CONFIG_HOME");
+    env::set_var("XDG_CONFIG_HOME", "./tests/tmp");
+    assert_eq!(*fetch_dump_path(), *Path::new("./tests/tmp/mfa-cli"));
+}
+
+#[test]
+fn fetch_dump_path_from_env_home() {
+    env::remove_var("MFA_CLI_CONFIG_HOME");
+    env::remove_var("XDG_CONFIG_HOME");
+
+    env::set_var("HOME", "./tests/tmp");
+    assert_eq!(*fetch_dump_path(), *Path::new("./tests/tmp/.mfa-cli"));
+}
+
+#[test]
+fn fetch_dump_path_from_current_dir() {
+    env::remove_var("MFA_CLI_CONFIG_HOME");
+    env::remove_var("XDG_CONFIG_HOME");
+    env::remove_var("HOME");
+
+    let expected = env::current_dir().unwrap().join(".mfa-cli");
+    assert_eq!(*fetch_dump_path(), expected);
 }
