@@ -1,6 +1,7 @@
 use super::config;
 use super::totp;
 use std::env;
+use std::fmt;
 use std::fs::{DirBuilder, File};
 use std::io::prelude::*;
 use std::path::Path;
@@ -10,6 +11,24 @@ const SAVE_DIR_NAME: &str = "mfa-cli";
 const HIDDEN_SAVE_DIR_NAME: &str = ".mfa-cli";
 // 設定ファイル名
 const CONFIG_FILE_NAME: &str = "profile";
+
+// for using print Profile
+#[derive(Debug)]
+pub struct Profile {
+    name: String,
+}
+
+impl fmt::Display for Profile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
+impl Profile {
+    pub fn new(name: String) -> Self {
+        Self { name }
+    }
+}
 
 #[derive(Debug)]
 pub struct Mfa {
@@ -43,6 +62,15 @@ impl Mfa {
     pub fn register_profile(&mut self, account_name: &str, secret: &str) -> Result<(), String> {
         self.config.new_profile(account_name, secret);
         self.dump()
+    }
+
+    // Get all of profile list
+    pub fn list_profiles(&self) -> Vec<Profile> {
+        self.config
+            .get_profiles()
+            .iter()
+            .map(|profile| Profile::new(profile.get_name().to_string()))
+            .collect()
     }
 
     pub fn remove_profile(&mut self, profile_name: &str) -> Result<(), String> {
@@ -269,4 +297,16 @@ fn test_remove_profile() {
 
     mfa.remove_profile("test").unwrap();
     assert!(mfa.get_secret_by_name("test").is_none());
+}
+
+#[test]
+fn test_list_profiles() {
+    let mut mfa: Mfa = Default::default();
+    mfa.config.new_profile("test1", "hoge");
+    mfa.config.new_profile("test2", "hoge");
+
+    let profiles = mfa.list_profiles();
+    assert_eq!(profiles.get(0).unwrap().name, "test1");
+    assert_eq!(profiles.get(1).unwrap().name, "test2");
+    assert!(profiles.get(2).is_none());
 }

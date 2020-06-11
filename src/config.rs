@@ -38,6 +38,11 @@ impl Config {
         None
     }
 
+    // Get borrow profiles
+    pub fn get_profiles(&self) -> &Vec<Profile> {
+        &self.profiles
+    }
+
     // Remove a profile.
     pub fn remove_profile(&mut self, name: &str) -> Result<(), String> {
         let mut index: Option<usize> = None;

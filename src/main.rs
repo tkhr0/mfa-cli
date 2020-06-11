@@ -26,6 +26,9 @@ fn main() {
             if let ("add", Some(add_args)) = profile_args.subcommand() {
                 profile_add(&mut mfa, add_args)
             }
+            if let ("list", Some(_)) = profile_args.subcommand() {
+                profile_list(&mfa)
+            }
             if let ("remove", Some(remove_args)) = profile_args.subcommand() {
                 profile_remove(&mut mfa, remove_args)
             }
@@ -59,6 +62,7 @@ fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
                                 .help("secret"),
                         ),
                 )
+                .subcommand(SubCommand::with_name("list").about("Show registered profile list"))
                 .subcommand(
                     SubCommand::with_name("remove")
                         .about("Remove any profile")
@@ -96,6 +100,15 @@ fn profile_add(mfa: &mut Mfa, add_args: &ArgMatches) {
         process::exit(3);
     };
     println!("Added new profile");
+    process::exit(0);
+}
+
+fn profile_list(mfa: &Mfa) {
+    println!();
+    for profile in mfa.list_profiles() {
+        print!(" {}", profile);
+    }
+    println!();
     process::exit(0);
 }
 
