@@ -5,6 +5,17 @@ extern crate toml;
 use serde::Deserialize;
 use serde::Serialize;
 
+#[derive(Debug, PartialEq)]
+pub enum ValidationError {
+    IllegalCharacter(&'static str), // A field contains illegal character.
+    TooShortLength(&'static str),   // The length of the value of a field is too short.
+    TooLongLength(&'static str),    // The length of the value of a field is too long.
+    Deplication(&'static str),      // The value of a field is already registered.
+    Requires(&'static str),         // A field must have any value.
+}
+
+type ValidationResult = Result<(), ValidationError>;
+
 // 設定
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
