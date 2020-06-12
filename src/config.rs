@@ -33,13 +33,27 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn new_profile(&mut self, name: &str, secret: &str) {
-        self.push_profile(Profile::new(name, secret));
+    pub fn new_profile(&mut self, name: &str, secret: &str) -> ValidationResult {
+        self.push_profile(Profile::new(name, secret))
     }
 
-    fn push_profile(&mut self, profile: Profile) {
-        // TODO: test name duplication
-        self.profiles.push(profile)
+    fn push_profile(&mut self, profile: Profile) -> ValidationResult {
+        match self.validate_profile(&profile) {
+            Ok(_) => {
+                // TODO: test name duplication
+                self.profiles.push(profile);
+                Ok(())
+            }
+            Err(err) => Err(err),
+        }
+    }
+
+    fn validate_profile(&self, profile: &Profile) -> ValidationResult {
+        if self.find_by_name(&profile.name).is_some() {
+            return Err(ValidationError::Deplication("This name already exists."));
+        }
+
+        profile.is_vaild()
     }
 
     // Get the decoded secret value with a profile name.
