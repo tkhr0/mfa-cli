@@ -60,7 +60,9 @@ impl Mfa {
 
     // Build new profile and save.
     pub fn register_profile(&mut self, account_name: &str, secret: &str) -> Result<(), String> {
-        self.config.new_profile(account_name, secret);
+        if let Err(err) = self.config.new_profile(account_name, secret) {
+            return Err(err.to_string());
+        }
         self.dump() // TODO: don't dump here.
     }
 

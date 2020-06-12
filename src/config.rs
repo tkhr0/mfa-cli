@@ -6,6 +6,7 @@ extern crate toml;
 use regex::Regex;
 use serde::Deserialize;
 use serde::Serialize;
+use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub enum ValidationError {
@@ -17,6 +18,18 @@ pub enum ValidationError {
 }
 
 type ValidationResult = Result<(), ValidationError>;
+
+impl fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::IllegalCharacter(msg)
+            | Self::TooShortLength(msg)
+            | Self::TooLongLength(msg)
+            | Self::Deplication(msg)
+            | Self::Requires(msg) => write!(f, "{}", msg),
+        }
+    }
+}
 
 // 設定
 #[derive(Serialize, Deserialize, Debug)]
