@@ -1,9 +1,35 @@
 extern crate base32;
+extern crate regex;
 extern crate serde;
 extern crate toml;
 
+use regex::Regex;
 use serde::Deserialize;
 use serde::Serialize;
+use std::fmt;
+
+#[derive(Debug, PartialEq)]
+pub enum ValidationError {
+    IllegalCharacter(&'static str), // A field contains illegal character.
+    TooShortLength(&'static str),   // The length of the value of a field is too short.
+    TooLongLength(&'static str),    // The length of the value of a field is too long.
+    Deplication(&'static str),      // The value of a field is already registered.
+    Requires(&'static str),         // A field must have any value.
+}
+
+type ValidationResult = Result<(), ValidationError>;
+
+impl fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::IllegalCharacter(msg)
+            | Self::TooShortLength(msg)
+            | Self::TooLongLength(msg)
+            | Self::Deplication(msg)
+            | Self::Requires(msg) => write!(f, "{}", msg),
+        }
+    }
+}
 
 // 設定
 #[derive(Serialize, Deserialize, Debug)]
@@ -20,13 +46,27 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn new_profile(&mut self, name: &str, secret: &str) {
-        self.push_profile(Profile::new(name, secret));
+    pub fn new_profile(&mut self, name: &str, secret: &str) -> ValidationResult {
+        self.push_profile(Profile::new(name, secret))
     }
 
-    fn push_profile(&mut self, profile: Profile) {
-        // TODO: test name duplication
-        self.profiles.push(profile)
+    fn push_profile(&mut self, profile: Profile) -> ValidationResult {
+        match self.validate_profile(&profile) {
+            Ok(_) => {
+                // TODO: test name duplication
+                self.profiles.push(profile);
+                Ok(())
+            }
+            Err(err) => Err(err),
+        }
+    }
+
+    fn validate_profile(&self, profile: &Profile) -> ValidationResult {
+        if self.find_by_name(&profile.name).is_some() {
+            return Err(ValidationError::Deplication("This name already exists."));
+        }
+
+        profile.is_vaild()
     }
 
     // Get the decoded secret value with a profile name.
@@ -115,6 +155,61 @@ impl Profile {
     pub fn get_secret(&self) -> Option<Vec<u8>> {
         base32::decode(base32::Alphabet::RFC4648 { padding: true }, &self.secret)
     }
+
+    // Validate self fields format.
+    // If validation is failed, returns error type and message.
+    pub fn is_vaild(&self) -> ValidationResult {
+        if let Err(err) = self.is_valid_name() {
+            return Err(err);
+        }
+
+        if let Err(err) = self.is_valid_secret() {
+            return Err(err);
+        }
+
+        Ok(())
+    }
+
+    // Validate name format.
+    //
+    // Requires
+    //   - 3~20 characters
+    //   - Alphabet or Number or Symbol (@-_)
+    fn is_valid_name(&self) -> ValidationResult {
+        if self.name.len() < 3 {
+            return Err(ValidationError::TooShortLength(
+                "Name requires at least 3 characters.",
+            ));
+        }
+        if 20 < self.name.len() {
+            return Err(ValidationError::TooLongLength(
+                "Name requires 20 characters or less.",
+            ));
+        }
+
+        // alphabet, number and symbol (@-_)
+        const VALID_NAME_PATTERN: &str = r"^[[[:alnum:]]_@-]+\z";
+        let re = Regex::new(VALID_NAME_PATTERN).unwrap();
+        if !re.is_match(&self.name) {
+            return Err(ValidationError::IllegalCharacter(
+                "Name can contain only alphabet, number and symbol (@-_) .",
+            ));
+        }
+
+        Ok(())
+    }
+
+    // Validate a secret field format.
+    //
+    // Requires
+    //   - doesn't blank
+    fn is_valid_secret(&self) -> ValidationResult {
+        if self.secret.is_empty() {
+            return Err(ValidationError::Requires("Secret must be present."));
+        }
+
+        Ok(())
+    }
 }
 
 #[test]
@@ -151,4 +246,84 @@ fn deserialize_config() {
     assert_eq!(config.profiles.len(), 1);
     assert_eq!(config.profiles[0].name, "test");
     assert_eq!(config.profiles[0].secret, "secret");
+}
+
+#[test]
+fn push_profile_validation_when_name_duplicates() {
+    let mut config: Config = Default::default();
+    config.new_profile("test", "a").unwrap();
+    let second_time = config.new_profile("test", "");
+
+    assert!(second_time.is_err());
+}
+
+#[test]
+fn push_profile_validation_when_name_contains_multi_byte_char() {
+    let mut config: Config = Default::default();
+    let result = config.new_profile("あ", "");
+
+    assert_eq!(
+        result,
+        Err(ValidationError::IllegalCharacter(
+            "Name can contain only alphabet, number and symbol (@-_) ."
+        ))
+    );
+}
+
+#[test]
+fn push_profile_validation_when_name_contains_symbols_other_than_hyphen_and_underscore_and_at_sign()
+{
+    let mut config: Config = Default::default();
+    let result = config.new_profile("!# $%&", "");
+
+    assert_eq!(
+        result,
+        Err(ValidationError::IllegalCharacter(
+            "Name can contain only alphabet, number and symbol (@-_) ."
+        ))
+    );
+}
+
+#[test]
+fn push_profile_validation_when_name_contains_approved_symbols() {
+    let mut config: Config = Default::default();
+    let result = config.new_profile("-_@", "secret");
+
+    assert_eq!(result, Ok(()));
+}
+
+#[test]
+fn push_profile_validation_when_name_is_too_short() {
+    let mut config: Config = Default::default();
+    let result = config.new_profile("ab", "");
+
+    assert_eq!(
+        result,
+        Err(ValidationError::TooShortLength(
+            "Name requires at least 3 characters."
+        ))
+    );
+}
+#[test]
+fn push_profile_validation_when_name_is_too_long() {
+    let mut config: Config = Default::default();
+    let result = config.new_profile(&"a".repeat(21), "");
+
+    assert_eq!(
+        result,
+        Err(ValidationError::TooLongLength(
+            "Name requires 20 characters or less."
+        ))
+    );
+}
+
+#[test]
+fn push_profile_validation_when_secret_is_blank() {
+    let mut config: Config = Default::default();
+    let result = config.new_profile("aaa", "");
+
+    assert_eq!(
+        result,
+        Err(ValidationError::Requires("Secret must be present."))
+    );
 }

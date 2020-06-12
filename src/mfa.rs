@@ -60,7 +60,9 @@ impl Mfa {
 
     // Build new profile and save.
     pub fn register_profile(&mut self, account_name: &str, secret: &str) -> Result<(), String> {
-        self.config.new_profile(account_name, secret);
+        if let Err(err) = self.config.new_profile(account_name, secret) {
+            return Err(err.to_string());
+        }
         self.dump() // TODO: don't dump here.
     }
 
@@ -293,7 +295,7 @@ fn fetch_dump_path_from_current_dir() {
 #[test]
 fn test_remove_profile() {
     let mut mfa: Mfa = Default::default();
-    mfa.config.new_profile("test", "hoge");
+    mfa.config.new_profile("test", "hoge").unwrap();
 
     mfa.remove_profile("test").unwrap();
     assert!(mfa.get_secret_by_name("test").is_none());
@@ -302,8 +304,8 @@ fn test_remove_profile() {
 #[test]
 fn test_list_profiles() {
     let mut mfa: Mfa = Default::default();
-    mfa.config.new_profile("test1", "hoge");
-    mfa.config.new_profile("test2", "hoge");
+    mfa.config.new_profile("test1", "hoge").unwrap();
+    mfa.config.new_profile("test2", "hoge").unwrap();
 
     let profiles = mfa.list_profiles();
     assert_eq!(profiles.get(0).unwrap().name, "test1");
