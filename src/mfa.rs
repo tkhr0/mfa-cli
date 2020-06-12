@@ -128,14 +128,19 @@ impl Mfa {
 
     // Run setup steps.
     //
-    // Initialize config file. Restore config if it exists already.
+    // Restore config if a dump file exists already.
+    // Otherwise do nothing.
     fn setup(&mut self) -> Result<(), String> {
-        // create config file if it does not exist
+        // nothing to do if it does not exist
         if !self.dump_file.exists() {
-            return self.dump_file.create();
+            return Ok(());
         }
 
-        self.restore()
+        if self.dump_file.check() {
+            return self.restore();
+        }
+
+        Ok(())
     }
 }
 
@@ -162,15 +167,21 @@ impl DumpFile {
         self.path().exists()
     }
 
-    // Create config file.
-    // If config file exists, it will be truncated.
-    fn create(&self) -> Result<(), String> {
-        DirBuilder::new().recursive(true).create(&self.dir).unwrap();
-
-        match File::create(&self.path()) {
-            Ok(_) => Ok(()),
-            Err(_) => Err("Can not create config file".to_string()),
+    // Check the dump file state.
+    // It returns true if the dump file is restorable condition.
+    //
+    // Conditions is the file exists, it is file and file size is not empty.
+    fn check(&self) -> bool {
+        if !self.exists() {
+            return false;
         }
+
+        let meta = match self.path().metadata() {
+            Ok(meta) => meta,
+            Err(_) => return false,
+        };
+
+        meta.is_file() && 0 < meta.len()
     }
 
     fn path(&self) -> Box<Path> {
@@ -290,6 +301,17 @@ fn fetch_dump_path_from_current_dir() {
 
     let expected = env::current_dir().unwrap().join(".mfa-cli");
     assert_eq!(*fetch_dump_path(), expected);
+}
+
+#[test]
+fn setup_when_there_is_empty_config_file() {
+    env::set_var("MFA_CLI_CONFIG_HOME", "tests/tmp/");
+    std::fs::create_dir_all("tests/tmp/mfa-cli/").unwrap();
+    File::create("tests/tmp/mfa-cli/profile").unwrap();
+
+    assert!(Mfa::new().is_ok());
+
+    std::fs::remove_file("tests/tmp/mfa-cli/profile").unwrap()
 }
 
 #[test]
