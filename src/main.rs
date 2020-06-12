@@ -99,9 +99,12 @@ fn profile_add(mfa: &mut Mfa, add_args: &ArgMatches) {
     let account_name = add_args.value_of("account_name").unwrap();
     let key = add_args.value_of("key").unwrap();
     if let Err(err) = mfa.register_profile(account_name, key) {
-        eprintln!("failed to dump config: {}", err);
+        eprintln!("failed to registring profile: {}", err);
         process::exit(3);
     };
+
+    dump_config(mfa);
+
     println!("Added new profile");
     process::exit(0);
 }
@@ -123,6 +126,12 @@ fn profile_remove(mfa: &mut Mfa, remove_args: &ArgMatches) {
         process::exit(5);
     }
 
+    dump_config(mfa);
+}
+
+// call Mfa#dump()
+// exit process with code 3 if failed dump.
+fn dump_config(mfa: &Mfa) {
     if let Err(err) = mfa.dump() {
         eprintln!("failed to dump config: {}", err);
         process::exit(3);

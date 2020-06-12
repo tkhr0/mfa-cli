@@ -58,12 +58,12 @@ impl Mfa {
         }
     }
 
-    // Build new profile and save.
+    // Build new profile and register.
     pub fn register_profile(&mut self, account_name: &str, secret: &str) -> Result<(), String> {
-        if let Err(err) = self.config.new_profile(account_name, secret) {
-            return Err(err.to_string());
+        match self.config.new_profile(account_name, secret) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err.to_string()),
         }
-        self.dump() // TODO: don't dump here.
     }
 
     // Get all of profile list
