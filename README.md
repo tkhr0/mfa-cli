@@ -1,6 +1,6 @@
 # MFA-CLI
 A CLI client for MFA
-
+It's a MFA code manager. You can manage MFA accounts and its secret code.
 
 ## Install
 Download a latest mfa-cli from mfa-cli.zip link on below releases page.
