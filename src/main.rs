@@ -45,27 +45,32 @@ fn main() {
 fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
     App::new("MFA CLI")
         .version(VERSION)
+        .about("MFA CLI is MFA code manager.")
+        .long_about("It's a MFA code manager.  You can manage MFA accounts and its secret code in command line.")
+        .usage("mfa-cli [SUBCOMMAND]\n\nYou can get help by running this command.\n$ mfa-cli help")
         .subcommand(
             SubCommand::with_name("profile")
-                .about("profile settings")
+                .about("You will manage profiles.")
+                .long_about("You will manage profiles. Profile is unit of name and secret key pair. You can use profile to manage secret keys. You can register profile, list up profiles, remove profile.")
                 .subcommand(
                     SubCommand::with_name("add")
                         .about("Add a new profile")
-                        .help("Add a new profile")
                         .arg(
                             Arg::with_name("account_name")
                                 .takes_value(true)
                                 .required(true)
-                                .help("account name"),
+                                .help("Enter a profile name as a label to manage your secret key.")
+                                .value_name("ACCOUNT_NAME"),
                         )
                         .arg(
                             Arg::with_name("key")
                                 .takes_value(true)
                                 .required(true)
-                                .help("secret"),
+                                .help("Enter the secret key that be provided by AWS IAM.")
+                                .value_name("SECRET"),
                         ),
                 )
-                .subcommand(SubCommand::with_name("list").about("Show registered profile list"))
+                .subcommand(SubCommand::with_name("list").about("Show registered profile list."))
                 .subcommand(
                     SubCommand::with_name("remove")
                         .about("Remove any profile")
@@ -73,24 +78,26 @@ fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
                             Arg::with_name("profile_name")
                                 .takes_value(true)
                                 .required(true)
-                                .help("Enter a profile name that You want to remove."),
+                                .help("Enter a profile name that you want to remove.")
+                                .value_name("PROFILE"),
                         ),
                 ),
         )
         .subcommand(
             SubCommand::with_name("show") // TODO: change sub command name to "code"
-                .about("Show MFA code for the profile")
+                .about("Show MFA code for the profile.")
                 .arg(
                     Arg::with_name("watch")
                         .short("-w")
                         .long("--watch")
-                        .help("After showing code, watch for changes"),
+                        .help("After showing code, watch for changes."),
                 )
                 .arg(
                     Arg::with_name("profile_name")
                         .takes_value(true)
                         .required(true)
-                        .help("profile name"),
+                        .help("Enter the profile name you want to check.")
+                        .value_name("PROFILE"),
                 ),
         )
 }
