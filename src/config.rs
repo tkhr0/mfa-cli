@@ -212,118 +212,123 @@ impl Profile {
     }
 }
 
-#[test]
-fn serialize_profile() {
-    let profile = Profile::new("test", "secret");
-    let expected = b"name = \"test\"\nsecret = \"secret\"\n";
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    assert_eq!(toml::to_vec(&profile).unwrap(), expected);
-}
+    #[test]
+    fn serialize_profile() {
+        let profile = Profile::new("test", "secret");
+        let expected = b"name = \"test\"\nsecret = \"secret\"\n";
 
-#[test]
-fn serialize_config() {
-    let config = Config {
-        profiles: vec![Profile::new("test", "secret")],
-    };
-    let expected = r#"[[profiles]]
+        assert_eq!(toml::to_vec(&profile).unwrap(), expected);
+    }
+
+    #[test]
+    fn serialize_config() {
+        let config = Config {
+            profiles: vec![Profile::new("test", "secret")],
+        };
+        let expected = r#"[[profiles]]
 name = "test"
 secret = "secret"
 "#;
 
-    assert_eq!(
-        String::from_utf8(config.serialize().unwrap()).unwrap(),
-        expected
-    );
-}
+        assert_eq!(
+            String::from_utf8(config.serialize().unwrap()).unwrap(),
+            expected
+        );
+    }
 
-#[test]
-fn deserialize_config() {
-    let string_config = b"[[profiles]]\nname = \"test\"\nsecret = \"secret\"\n ".to_vec();
-    let mut config: Config = Default::default();
+    #[test]
+    fn deserialize_config() {
+        let string_config = b"[[profiles]]\nname = \"test\"\nsecret = \"secret\"\n ".to_vec();
+        let mut config: Config = Default::default();
 
-    config.deserialize(string_config).unwrap();
+        config.deserialize(string_config).unwrap();
 
-    assert_eq!(config.profiles.len(), 1);
-    assert_eq!(config.profiles[0].name, "test");
-    assert_eq!(config.profiles[0].secret, "secret");
-}
+        assert_eq!(config.profiles.len(), 1);
+        assert_eq!(config.profiles[0].name, "test");
+        assert_eq!(config.profiles[0].secret, "secret");
+    }
 
-#[test]
-fn push_profile_validation_when_name_duplicates() {
-    let mut config: Config = Default::default();
-    config.new_profile("test", "a").unwrap();
-    let second_time = config.new_profile("test", "");
+    #[test]
+    fn push_profile_validation_when_name_duplicates() {
+        let mut config: Config = Default::default();
+        config.new_profile("test", "a").unwrap();
+        let second_time = config.new_profile("test", "");
 
-    assert!(second_time.is_err());
-}
+        assert!(second_time.is_err());
+    }
 
-#[test]
-fn push_profile_validation_when_name_contains_multi_byte_char() {
-    let mut config: Config = Default::default();
-    let result = config.new_profile("あ", "");
+    #[test]
+    fn push_profile_validation_when_name_contains_multi_byte_char() {
+        let mut config: Config = Default::default();
+        let result = config.new_profile("あ", "");
 
-    assert_eq!(
-        result,
-        Err(ValidationError::IllegalCharacter(
-            "Name can contain only alphabet, number and symbol (@-_) ."
-        ))
-    );
-}
+        assert_eq!(
+            result,
+            Err(ValidationError::IllegalCharacter(
+                "Name can contain only alphabet, number and symbol (@-_) ."
+            ))
+        );
+    }
 
-#[test]
-fn push_profile_validation_when_name_contains_symbols_other_than_hyphen_and_underscore_and_at_sign()
-{
-    let mut config: Config = Default::default();
-    let result = config.new_profile("!# $%&", "");
+    #[test]
+    fn push_profile_validation_when_name_contains_symbols_other_than_hyphen_and_underscore_and_at_sign(
+    ) {
+        let mut config: Config = Default::default();
+        let result = config.new_profile("!# $%&", "");
 
-    assert_eq!(
-        result,
-        Err(ValidationError::IllegalCharacter(
-            "Name can contain only alphabet, number and symbol (@-_) ."
-        ))
-    );
-}
+        assert_eq!(
+            result,
+            Err(ValidationError::IllegalCharacter(
+                "Name can contain only alphabet, number and symbol (@-_) ."
+            ))
+        );
+    }
 
-#[test]
-fn push_profile_validation_when_name_contains_approved_symbols() {
-    let mut config: Config = Default::default();
-    let result = config.new_profile("-_@", "secret");
+    #[test]
+    fn push_profile_validation_when_name_contains_approved_symbols() {
+        let mut config: Config = Default::default();
+        let result = config.new_profile("-_@", "secret");
 
-    assert_eq!(result, Ok(()));
-}
+        assert_eq!(result, Ok(()));
+    }
 
-#[test]
-fn push_profile_validation_when_name_is_too_short() {
-    let mut config: Config = Default::default();
-    let result = config.new_profile("ab", "");
+    #[test]
+    fn push_profile_validation_when_name_is_too_short() {
+        let mut config: Config = Default::default();
+        let result = config.new_profile("ab", "");
 
-    assert_eq!(
-        result,
-        Err(ValidationError::TooShortLength(
-            "Name requires at least 3 characters."
-        ))
-    );
-}
-#[test]
-fn push_profile_validation_when_name_is_too_long() {
-    let mut config: Config = Default::default();
-    let result = config.new_profile(&"a".repeat(21), "");
+        assert_eq!(
+            result,
+            Err(ValidationError::TooShortLength(
+                "Name requires at least 3 characters."
+            ))
+        );
+    }
+    #[test]
+    fn push_profile_validation_when_name_is_too_long() {
+        let mut config: Config = Default::default();
+        let result = config.new_profile(&"a".repeat(21), "");
 
-    assert_eq!(
-        result,
-        Err(ValidationError::TooLongLength(
-            "Name requires 20 characters or less."
-        ))
-    );
-}
+        assert_eq!(
+            result,
+            Err(ValidationError::TooLongLength(
+                "Name requires 20 characters or less."
+            ))
+        );
+    }
 
-#[test]
-fn push_profile_validation_when_secret_is_blank() {
-    let mut config: Config = Default::default();
-    let result = config.new_profile("aaa", "");
+    #[test]
+    fn push_profile_validation_when_secret_is_blank() {
+        let mut config: Config = Default::default();
+        let result = config.new_profile("aaa", "");
 
-    assert_eq!(
-        result,
-        Err(ValidationError::Requires("Secret must be present."))
-    );
+        assert_eq!(
+            result,
+            Err(ValidationError::Requires("Secret must be present."))
+        );
+    }
 }
