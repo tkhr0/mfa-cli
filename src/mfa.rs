@@ -244,99 +244,104 @@ fn env_home() -> Option<String> {
     }
 }
 
-#[test]
-fn dump_file_path() {
-    let dump_file = DumpFile {
-        dir: Path::new("/path/to").to_path_buf().into_boxed_path(),
-        file_name: "file",
-    };
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let path = dump_file.path();
+    #[test]
+    fn dump_file_path() {
+        let dump_file = DumpFile {
+            dir: Path::new("/path/to").to_path_buf().into_boxed_path(),
+            file_name: "file",
+        };
 
-    assert_eq!(*path.as_ref(), *Path::new("/path/to/file"));
-}
+        let path = dump_file.path();
 
-#[test]
-fn fetch_dump_path_from_env_my_home_when_that_exists() {
-    let current_dir = env::current_dir().unwrap();
-    let expected = current_dir.join("tests/tmp/mfa-cli");
-    env::set_var("MFA_CLI_CONFIG_HOME", current_dir.join("tests/tmp"));
+        assert_eq!(*path.as_ref(), *Path::new("/path/to/file"));
+    }
 
-    assert_eq!(*fetch_dump_path(), *expected);
-}
+    #[test]
+    fn fetch_dump_path_from_env_my_home_when_that_exists() {
+        let current_dir = env::current_dir().unwrap();
+        let expected = current_dir.join("tests/tmp/mfa-cli");
+        env::set_var("MFA_CLI_CONFIG_HOME", current_dir.join("tests/tmp"));
 
-#[test]
-fn fetch_dump_path_from_env_my_home_when_that_does_not_exist() {
-    let current_dir = env::current_dir().unwrap();
+        assert_eq!(*fetch_dump_path(), *expected);
+    }
 
-    let expected = current_dir.join("tests/tmp/does_not_exist/mfa-cli");
-    let config_home_path = current_dir.join("tests/tmp/does_not_exist");
-    env::set_var("MFA_CLI_CONFIG_HOME", config_home_path.clone());
+    #[test]
+    fn fetch_dump_path_from_env_my_home_when_that_does_not_exist() {
+        let current_dir = env::current_dir().unwrap();
 
-    assert_eq!(*fetch_dump_path(), *expected);
-    std::fs::remove_dir(config_home_path).unwrap();
-}
+        let expected = current_dir.join("tests/tmp/does_not_exist/mfa-cli");
+        let config_home_path = current_dir.join("tests/tmp/does_not_exist");
+        env::set_var("MFA_CLI_CONFIG_HOME", config_home_path.clone());
 
-// NOTE: The reason this test is marked as ignore is that environment variables conflict between tests
-//       You have to append single thread option when run tests
-#[test]
-#[ignore]
-fn fetch_dump_path_from_env_xdg_config_home() {
-    env::remove_var("MFA_CLI_CONFIG_HOME");
-    env::set_var("XDG_CONFIG_HOME", "./tests/tmp");
-    assert_eq!(*fetch_dump_path(), *Path::new("./tests/tmp/mfa-cli"));
-}
+        assert_eq!(*fetch_dump_path(), *expected);
+        std::fs::remove_dir(config_home_path).unwrap();
+    }
 
-#[test]
-fn fetch_dump_path_from_env_home() {
-    env::remove_var("MFA_CLI_CONFIG_HOME");
-    env::remove_var("XDG_CONFIG_HOME");
+    // NOTE: The reason this test is marked as ignore is that environment variables conflict between tests
+    //       You have to append single thread option when run tests
+    #[test]
+    #[ignore]
+    fn fetch_dump_path_from_env_xdg_config_home() {
+        env::remove_var("MFA_CLI_CONFIG_HOME");
+        env::set_var("XDG_CONFIG_HOME", "./tests/tmp");
+        assert_eq!(*fetch_dump_path(), *Path::new("./tests/tmp/mfa-cli"));
+    }
 
-    env::set_var("HOME", "./tests/tmp");
-    assert_eq!(*fetch_dump_path(), *Path::new("./tests/tmp/.mfa-cli"));
-}
+    #[test]
+    fn fetch_dump_path_from_env_home() {
+        env::remove_var("MFA_CLI_CONFIG_HOME");
+        env::remove_var("XDG_CONFIG_HOME");
 
-// NOTE: The reason this test is marked as ignore is that environment variables conflict between tests
-//       You have to append single thread option when run tests
-#[test]
-#[ignore]
-fn fetch_dump_path_from_current_dir() {
-    env::remove_var("MFA_CLI_CONFIG_HOME");
-    env::remove_var("XDG_CONFIG_HOME");
-    env::remove_var("HOME");
+        env::set_var("HOME", "./tests/tmp");
+        assert_eq!(*fetch_dump_path(), *Path::new("./tests/tmp/.mfa-cli"));
+    }
 
-    let expected = env::current_dir().unwrap().join(".mfa-cli");
-    assert_eq!(*fetch_dump_path(), expected);
-}
+    // NOTE: The reason this test is marked as ignore is that environment variables conflict between tests
+    //       You have to append single thread option when run tests
+    #[test]
+    #[ignore]
+    fn fetch_dump_path_from_current_dir() {
+        env::remove_var("MFA_CLI_CONFIG_HOME");
+        env::remove_var("XDG_CONFIG_HOME");
+        env::remove_var("HOME");
 
-#[test]
-fn setup_when_there_is_empty_config_file() {
-    env::set_var("MFA_CLI_CONFIG_HOME", "tests/tmp/");
-    std::fs::create_dir_all("tests/tmp/mfa-cli/").unwrap();
-    File::create("tests/tmp/mfa-cli/profile").unwrap();
+        let expected = env::current_dir().unwrap().join(".mfa-cli");
+        assert_eq!(*fetch_dump_path(), expected);
+    }
 
-    assert!(Mfa::new().is_ok());
+    #[test]
+    fn setup_when_there_is_empty_config_file() {
+        env::set_var("MFA_CLI_CONFIG_HOME", "tests/tmp/");
+        std::fs::create_dir_all("tests/tmp/mfa-cli/").unwrap();
+        File::create("tests/tmp/mfa-cli/profile").unwrap();
 
-    std::fs::remove_file("tests/tmp/mfa-cli/profile").unwrap()
-}
+        assert!(Mfa::new().is_ok());
 
-#[test]
-fn test_remove_profile() {
-    let mut mfa: Mfa = Default::default();
-    mfa.config.new_profile("test", "hoge").unwrap();
+        std::fs::remove_file("tests/tmp/mfa-cli/profile").unwrap()
+    }
 
-    mfa.remove_profile("test").unwrap();
-    assert!(mfa.get_secret_by_name("test").is_none());
-}
+    #[test]
+    fn test_remove_profile() {
+        let mut mfa: Mfa = Default::default();
+        mfa.config.new_profile("test", "hoge").unwrap();
 
-#[test]
-fn test_list_profiles() {
-    let mut mfa: Mfa = Default::default();
-    mfa.config.new_profile("test1", "hoge").unwrap();
-    mfa.config.new_profile("test2", "hoge").unwrap();
+        mfa.remove_profile("test").unwrap();
+        assert!(mfa.get_secret_by_name("test").is_none());
+    }
 
-    let profiles = mfa.list_profiles();
-    assert_eq!(profiles.get(0).unwrap().name, "test1");
-    assert_eq!(profiles.get(1).unwrap().name, "test2");
-    assert!(profiles.get(2).is_none());
+    #[test]
+    fn test_list_profiles() {
+        let mut mfa: Mfa = Default::default();
+        mfa.config.new_profile("test1", "hoge").unwrap();
+        mfa.config.new_profile("test2", "hoge").unwrap();
+
+        let profiles = mfa.list_profiles();
+        assert_eq!(profiles.get(0).unwrap().name, "test1");
+        assert_eq!(profiles.get(1).unwrap().name, "test2");
+        assert!(profiles.get(2).is_none());
+    }
 }

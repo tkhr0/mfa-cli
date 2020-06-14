@@ -61,72 +61,77 @@ fn zero_padding(string: String, length: usize) -> String {
     value
 }
 
-#[test]
-fn zero_padding_test() {
-    assert_eq!(zero_padding("1".to_string(), 5), "00001")
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn to_decima_too_small() {
-    assert!(bit_to_decimal_code(0, 0).is_err())
-}
-#[test]
-fn to_decima_too_large() {
-    assert!(bit_to_decimal_code(0, 32).is_err())
-}
+    #[test]
+    fn zero_padding_test() {
+        assert_eq!(zero_padding("1".to_string(), 5), "00001")
+    }
 
-#[test]
-fn truncate_test() {
-    let arr = GenericArray::from([
-        0x00_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xbb, 0xbb, 0xbb,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x0a,
-    ]);
-    let result = truncate(arr);
+    #[test]
+    fn to_decima_too_small() {
+        assert!(bit_to_decimal_code(0, 0).is_err())
+    }
+    #[test]
+    fn to_decima_too_large() {
+        assert!(bit_to_decimal_code(0, 32).is_err())
+    }
 
-    assert_eq!(result, 0x7f_bb_bb_bb);
-}
+    #[test]
+    fn truncate_test() {
+        let arr = GenericArray::from([
+            0x00_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xbb, 0xbb, 0xbb,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x0a,
+        ]);
+        let result = truncate(arr);
 
-#[test]
-fn rfc_4226_truncate_0() {
-    let hmac_sha1 = GenericArray::from([
-        0xcc_u8, 0x93, 0xcf, 0x18, 0x50, 0x8d, 0x94, 0x93, 0x4c, 0x64, 0xb6, 0x5d, 0x8b, 0xa7,
-        0x66, 0x7f, 0xb7, 0xcd, 0xe4, 0xb0,
-    ]);
+        assert_eq!(result, 0x7f_bb_bb_bb);
+    }
 
-    assert_eq!(truncate(hmac_sha1), 0x4c93_cf18);
-}
+    #[test]
+    fn rfc_4226_truncate_0() {
+        let hmac_sha1 = GenericArray::from([
+            0xcc_u8, 0x93, 0xcf, 0x18, 0x50, 0x8d, 0x94, 0x93, 0x4c, 0x64, 0xb6, 0x5d, 0x8b, 0xa7,
+            0x66, 0x7f, 0xb7, 0xcd, 0xe4, 0xb0,
+        ]);
 
-#[test]
-fn rfc_4226_truncate_1() {
-    let hmac_sha1 = GenericArray::from([
-        0x75_u8, 0xa4, 0x8a, 0x19, 0xd4, 0xcb, 0xe1, 0x00, 0x64, 0x4e, 0x8a, 0xc1, 0x39, 0x7e,
-        0xea, 0x74, 0x7a, 0x2d, 0x33, 0xab,
-    ]);
+        assert_eq!(truncate(hmac_sha1), 0x4c93_cf18);
+    }
 
-    assert_eq!(truncate(hmac_sha1), 0x4139_7eea);
-}
+    #[test]
+    fn rfc_4226_truncate_1() {
+        let hmac_sha1 = GenericArray::from([
+            0x75_u8, 0xa4, 0x8a, 0x19, 0xd4, 0xcb, 0xe1, 0x00, 0x64, 0x4e, 0x8a, 0xc1, 0x39, 0x7e,
+            0xea, 0x74, 0x7a, 0x2d, 0x33, 0xab,
+        ]);
 
-#[test]
-fn rfc_4226_to_code_2() {
-    assert_eq!(bit_to_decimal_code(0x82f_ef30, 6), Ok("359152".to_string()));
-}
+        assert_eq!(truncate(hmac_sha1), 0x4139_7eea);
+    }
 
-#[test]
-fn rfc_4226_to_code_3() {
-    assert_eq!(
-        bit_to_decimal_code(0x66ef_7655, 6),
-        Ok("969429".to_string())
-    );
-}
+    #[test]
+    fn rfc_4226_to_code_2() {
+        assert_eq!(bit_to_decimal_code(0x82f_ef30, 6), Ok("359152".to_string()));
+    }
 
-#[test]
-fn rfc_4226_hotp_4() {
-    let code = hotp(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 4], 6);
-    assert_eq!(code, Ok("338314".to_string()));
-}
+    #[test]
+    fn rfc_4226_to_code_3() {
+        assert_eq!(
+            bit_to_decimal_code(0x66ef_7655, 6),
+            Ok("969429".to_string())
+        );
+    }
 
-#[test]
-fn rfc_4226_hotp_5() {
-    let code = hotp(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 5], 6);
-    assert_eq!(code, Ok("254676".to_string()));
+    #[test]
+    fn rfc_4226_hotp_4() {
+        let code = hotp(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 4], 6);
+        assert_eq!(code, Ok("338314".to_string()));
+    }
+
+    #[test]
+    fn rfc_4226_hotp_5() {
+        let code = hotp(b"12345678901234567890", &[0_u8, 0, 0, 0, 0, 0, 0, 5], 6);
+        assert_eq!(code, Ok("254676".to_string()));
+    }
 }
