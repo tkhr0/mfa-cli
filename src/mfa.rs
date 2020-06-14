@@ -277,7 +277,10 @@ fn fetch_dump_path_from_env_my_home_when_that_does_not_exist() {
     std::fs::remove_dir(config_home_path).unwrap();
 }
 
+// NOTE: The reason this test is marked as ignore is that environment variables conflict between tests
+//       You have to append single thread option when run tests
 #[test]
+#[ignore]
 fn fetch_dump_path_from_env_xdg_config_home() {
     env::remove_var("MFA_CLI_CONFIG_HOME");
     env::set_var("XDG_CONFIG_HOME", "./tests/tmp");
@@ -293,7 +296,10 @@ fn fetch_dump_path_from_env_home() {
     assert_eq!(*fetch_dump_path(), *Path::new("./tests/tmp/.mfa-cli"));
 }
 
+// NOTE: The reason this test is marked as ignore is that environment variables conflict between tests
+//       You have to append single thread option when run tests
 #[test]
+#[ignore]
 fn fetch_dump_path_from_current_dir() {
     env::remove_var("MFA_CLI_CONFIG_HOME");
     env::remove_var("XDG_CONFIG_HOME");
