@@ -160,7 +160,7 @@ fn show(mfa: &Mfa, args: &ArgMatches) {
     loop {
         let code = match totp::totp(&secret) {
             Ok(code) => code,
-            Err(err) => panic!(err),
+            Err(err) => panic!("{}", err),
         };
         print!("{}", code);
         io::stdout().flush().unwrap();
