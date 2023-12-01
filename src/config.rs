@@ -32,17 +32,9 @@ impl fmt::Display for ValidationError {
 }
 
 // 設定
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Config {
     profiles: Vec<Profile>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            profiles: Vec::new(),
-        }
-    }
 }
 
 impl Config {
@@ -89,7 +81,6 @@ impl Config {
         self.profiles.iter().enumerate().for_each(|(i, profile)| {
             if profile.name == name {
                 index = Some(i);
-                return;
             }
         });
 
@@ -103,13 +94,9 @@ impl Config {
     }
 
     fn find_by_name(&self, name: &str) -> Option<&Profile> {
-        for profile in &self.profiles {
-            if *profile.get_name() == *name {
-                return Some(&profile);
-            }
-        }
-
-        None
+        self.profiles
+            .iter()
+            .find(|&profile| *profile.get_name() == *name)
     }
 
     // Serialize to strings
@@ -159,13 +146,9 @@ impl Profile {
     // Validate self fields format.
     // If validation is failed, returns error type and message.
     pub fn is_vaild(&self) -> ValidationResult {
-        if let Err(err) = self.is_valid_name() {
-            return Err(err);
-        }
+        self.is_valid_name()?;
 
-        if let Err(err) = self.is_valid_secret() {
-            return Err(err);
-        }
+        self.is_valid_secret()?;
 
         Ok(())
     }

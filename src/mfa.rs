@@ -30,19 +30,10 @@ impl Profile {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Mfa {
     config: config::Config,
     dump_file: DumpFile,
-}
-
-impl Default for Mfa {
-    fn default() -> Self {
-        Self {
-            config: Default::default(),
-            dump_file: Default::default(),
-        }
-    }
 }
 
 impl Mfa {

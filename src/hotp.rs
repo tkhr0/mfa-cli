@@ -41,7 +41,7 @@ fn truncate(hmac: GenericArray<u8, OutputSize>) -> u32 {
 
 // HMAC-SHA-1 を指定の桁に丸め込む
 fn bit_to_decimal_code(sbits: u32, digits: u8) -> Result<String, String> {
-    if digits < 1 || 31 < digits {
+    if !(1..=31).contains(&digits) {
         return Err(format!("The digits is out of range (1~31): {}", digits));
     }
 
