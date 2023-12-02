@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
+    - uses: dtolnay/rust-toolchain@master
       with:
         toolchain: stable
 
@@ -52,7 +52,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
+    - uses: dtolnay/rust-toolchain@master
       with:
         toolchain: stable
 
@@ -82,9 +82,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
+
+    - uses: dtolnay/rust-toolchain@master
       with:
         toolchain: stable
+    - run: rustup set profile default
 
     - name: Cache cargo registry
       uses: actions/cache@v1
@@ -102,19 +104,18 @@ jobs:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - uses: actions-rs/cargo@v1
-      with:
-        command: clippy
-        args: --all-targets --all-features -- -D warnings
+    - run: cargo clippy --all-targets --all-features -- --deny warnings
 
   cargo-fmt:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
+
+    - uses: dtolnay/rust-toolchain@master
       with:
         toolchain: stable
+    - run: rustup set profile default
 
     - name: Cache cargo registry
       uses: actions/cache@v1
@@ -132,17 +133,14 @@ jobs:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - uses: actions-rs/cargo@v1
-      with:
-        command: fmt
-        args: -- --check
+    - run: cargo fmt -- --check
 
   cargo-test:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
+    - uses: dtolnay/rust-toolchain@master
       with:
         toolchain: stable
 
