@@ -100,16 +100,16 @@ impl Config {
     }
 
     // Serialize to strings
-    pub fn serialize(&self) -> Result<Vec<u8>, String> {
-        match toml::to_vec(&self) {
+    pub fn serialize(&self) -> Result<String, String> {
+        match toml::to_string(&self) {
             Ok(data) => Ok(data),
             Err(err) => Err(err.to_string()),
         }
     }
 
     // Deserialize config from strings
-    pub fn deserialize(&mut self, content: Vec<u8>) -> Result<(), String> {
-        match toml::from_slice(&content) {
+    pub fn deserialize(&mut self, content: &str) -> Result<(), String> {
+        match toml::from_str(content) {
             Ok(config) => {
                 *self = config;
                 Ok(())
@@ -202,9 +202,9 @@ mod tests {
     #[test]
     fn serialize_profile() {
         let profile = Profile::new("test", "secret");
-        let expected = b"name = \"test\"\nsecret = \"secret\"\n";
+        let expected = "name = \"test\"\nsecret = \"secret\"\n";
 
-        assert_eq!(toml::to_vec(&profile).unwrap(), expected);
+        assert_eq!(toml::to_string(&profile).unwrap(), expected);
     }
 
     #[test]
@@ -217,15 +217,12 @@ name = "test"
 secret = "secret"
 "#;
 
-        assert_eq!(
-            String::from_utf8(config.serialize().unwrap()).unwrap(),
-            expected
-        );
+        assert_eq!(config.serialize().unwrap(), expected);
     }
 
     #[test]
     fn deserialize_config() {
-        let string_config = b"[[profiles]]\nname = \"test\"\nsecret = \"secret\"\n ".to_vec();
+        let string_config = "[[profiles]]\nname = \"test\"\nsecret = \"secret\"\n ";
         let mut config: Config = Default::default();
 
         config.deserialize(string_config).unwrap();
