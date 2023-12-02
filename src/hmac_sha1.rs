@@ -1,5 +1,4 @@
 extern crate digest;
-extern crate generic_array;
 extern crate hmac;
 extern crate sha1;
 
@@ -13,14 +12,14 @@ type HmacSha1 = Hmac<Sha1>;
 
 // HMAC-SHA-1 を計算する
 pub fn gen_hmac_sha1(key: &[u8], input: &[u8]) -> Result<GenericArray<u8, OutputSize>, String> {
-    let mut mac = match HmacSha1::new_varkey(key) {
+    let mut mac = match HmacSha1::new_from_slice(key) {
         Ok(mac) => mac,
         Err(err) => return Err(format!("{}", err)),
     };
 
-    mac.input(input);
+    mac.update(input);
 
-    Ok(mac.result().code())
+    Ok(mac.finalize().into_bytes())
 }
 
 #[cfg(test)]
