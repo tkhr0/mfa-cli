@@ -97,7 +97,7 @@ impl Mfa {
             Ok(file) => file,
             Err(err) => return Err(err.to_string()),
         };
-        match file.write_all(&config_data) {
+        match file.write_all(config_data.as_bytes()) {
             Ok(()) => Ok(()),
             Err(err) => Err(err.to_string()),
         }
@@ -109,12 +109,12 @@ impl Mfa {
             Ok(file) => file,
             Err(err) => return Err(err.to_string()),
         };
-        let mut buffer = Vec::new();
-        if let Err(err) = file.read_to_end(&mut buffer) {
+        let mut contents = String::new();
+        if let Err(err) = file.read_to_string(&mut contents) {
             return Err(err.to_string());
         };
 
-        self.config.deserialize(buffer)
+        self.config.deserialize(&contents)
     }
 
     // Run setup steps.
