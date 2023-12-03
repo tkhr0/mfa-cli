@@ -28,3 +28,7 @@ clap = "2.33"
 serde = { version = "1.0.0", features = ["derive"] }
 toml = "0.8"
 regex = "1"
+
+# testing
+tempfile = "3.8"
+# trycmd = "0.14"
