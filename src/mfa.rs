@@ -256,6 +256,7 @@ fn env_home() -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile;
 
     #[test]
     fn dump_file_path() {
@@ -267,6 +268,33 @@ mod tests {
         let path = dump_file.path();
 
         assert_eq!(*path.as_ref(), *Path::new("/path/to/file"));
+    }
+
+    #[test]
+    #[ignore]
+    fn setup_config_dir_for_for_xdg_config_home() {
+        let config_home = tempfile::tempdir().unwrap();
+        env::set_var("MFA_CLI_CONFIG_HOME", config_home.path().to_str().unwrap());
+
+        let _ = Mfa::new();
+        assert!(config_home.path().join("mfa-cli").is_dir());
+    }
+
+    #[test]
+    #[ignore]
+    fn setup_config_dir_for_current_dir() {
+        let pwd = env::current_dir().unwrap();
+        let config_home = tempfile::tempdir().unwrap();
+
+        env::remove_var("MFA_CLI_CONFIG_HOME");
+        env::remove_var("XDG_CONFIG_HOME");
+        env::remove_var("HOME");
+        let _ = env::set_current_dir(config_home.path());
+
+        let _ = Mfa::new();
+        assert!(config_home.path().join(".mfa-cli").is_dir());
+
+        let _ = env::set_current_dir(pwd);
     }
 
     #[test]
