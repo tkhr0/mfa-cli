@@ -122,6 +122,16 @@ impl Mfa {
     // Restore config if a dump file exists already.
     // Otherwise do nothing.
     fn setup(&mut self) -> Result<(), String> {
+        // Create save dir
+        if !self.dump_file.dir_exists() {
+            if let Err(err) = DirBuilder::new()
+                .recursive(true)
+                .create(self.dump_file.dir_path())
+            {
+                return Err(err.to_string());
+            }
+        }
+
         // nothing to do if it does not exist
         if !self.dump_file.exists() {
             return Ok(());
@@ -158,6 +168,10 @@ impl DumpFile {
         self.path().exists()
     }
 
+    fn dir_exists(&self) -> bool {
+        self.dir_path().exists()
+    }
+
     // Check the dump file state.
     // It returns true if the dump file is restorable condition.
     //
@@ -179,6 +193,10 @@ impl DumpFile {
         let mut path = self.dir.to_path_buf();
         path.push(self.file_name);
         path.into_boxed_path()
+    }
+
+    fn dir_path(&self) -> &Path {
+        &self.dir
     }
 }
 
