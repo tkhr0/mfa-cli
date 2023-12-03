@@ -1,0 +1,9 @@
+```
+$ mfa-cli profile add trycmd-show hoge
+...
+```
+
+```
+$ mfa-cli show hoge
+...
+```

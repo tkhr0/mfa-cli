@@ -1,0 +1,5 @@
+bin.name = "mfa-cli"
+fs.sandbox = true
+
+[env]
+remove = ["MFA_CLI_CONFIG_HOME", "XDG_CONFIG_HOME", "HOME"]

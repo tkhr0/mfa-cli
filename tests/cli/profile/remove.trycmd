@@ -1,0 +1,9 @@
+```
+$ mfa-cli profile add trycmd hoge
+...
+```
+
+
+```
+$ mfa-cli profile remove trycmd
+```
