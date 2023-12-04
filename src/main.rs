@@ -1,7 +1,7 @@
 extern crate clap;
 extern crate mfa_cli;
 
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{ArgAction, Args, CommandFactory, Parser, Subcommand};
 use mfa_cli::mfa::Mfa;
 use mfa_cli::totp;
 use std::io::{self, Write};
@@ -9,6 +9,67 @@ use std::process;
 use std::{thread, time};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[derive(Parser)]
+#[clap(name = "MFA CLI")]
+#[clap(version = VERSION)]
+#[clap(about = "MFA CLI is MFA code manager.")]
+#[clap(
+    long_about = "It's a MFA code manager. You can manage MFA accounts and its secret code in command line."
+)]
+struct Cli {
+    #[clap(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    #[clap(subcommand)]
+    #[clap(
+        long_about = "You will manage profiles. Profile is unit of name and secret key pair. You can use profile to manage secret keys. You can register profile, list up profiles, remove profile."
+    )]
+    /// You will manage profiles.
+    Profile(Profile),
+    /// Show MFA code for the profile.
+    Show(Show),
+}
+
+#[derive(Subcommand)]
+enum Profile {
+    /// Add a new profile
+    Add(Add),
+    /// Show registered profile list.
+    List,
+    /// Remove any profile
+    Remove(Remove),
+}
+
+#[derive(Args)]
+struct Show {
+    #[clap(value_parser)]
+    /// Enter the profile name you want to check.
+    profile: String,
+    #[clap(short, long, action = ArgAction::SetFalse)]
+    /// After showing code, watch for changes.
+    watch: bool,
+}
+
+#[derive(Args)]
+struct Add {
+    #[clap(value_parser)]
+    /// Enter a profile name as a label to manage your secret key.
+    account_name: String,
+    #[clap(value_parser)]
+    /// Enter the secret key that be provided by AWS IAM.
+    key: String,
+}
+
+#[derive(Args)]
+struct Remove {
+    #[clap(value_parser)]
+    /// Enter a profile name that you want to remove.
+    profile: String,
+}
 
 fn main() {
     let mut mfa = match Mfa::new() {
@@ -19,93 +80,23 @@ fn main() {
         }
     };
 
-    let args = build_option_parser().get_matches();
+    let cli = Cli::parse();
 
-    match args.subcommand() {
-        ("profile", Some(profile_args)) => {
-            // TODO: refactor, using match and write tests
-            if let ("add", Some(add_args)) = profile_args.subcommand() {
-                profile_add(&mut mfa, add_args)
-            }
-            if let ("list", Some(_)) = profile_args.subcommand() {
-                profile_list(&mfa)
-            }
-            if let ("remove", Some(remove_args)) = profile_args.subcommand() {
-                profile_remove(&mut mfa, remove_args)
-            }
-        }
-        ("show", Some(show_args)) => show(&mfa, show_args),
-        _ => println!("{}", args.usage()),
-    }
+    match &cli.command {
+        Some(Commands::Profile(profile)) => match profile {
+            Profile::Add(args) => profile_add(&mut mfa, args),
+            Profile::List => profile_list(&mfa),
+            Profile::Remove(args) => profile_remove(&mut mfa, args),
+        },
+        Some(Commands::Show(args)) => show(&mfa, args),
+        &None => Cli::command().print_long_help().unwrap(),
+    };
 
-    // TODO: do exit(0) here.
+    process::exit(0);
 }
 
-// オプション
-fn build_option_parser<'a, 'b>() -> App<'a, 'b> {
-    App::new("MFA CLI")
-        .version(VERSION)
-        .about("MFA CLI is MFA code manager.")
-        .long_about("It's a MFA code manager.  You can manage MFA accounts and its secret code in command line.")
-        .usage("mfa-cli [SUBCOMMAND]\n\nYou can get help by running this command.\n$ mfa-cli help")
-        .subcommand(
-            SubCommand::with_name("profile")
-                .about("You will manage profiles.")
-                .long_about("You will manage profiles. Profile is unit of name and secret key pair. You can use profile to manage secret keys. You can register profile, list up profiles, remove profile.")
-                .subcommand(
-                    SubCommand::with_name("add")
-                        .about("Add a new profile")
-                        .arg(
-                            Arg::with_name("account_name")
-                                .takes_value(true)
-                                .required(true)
-                                .help("Enter a profile name as a label to manage your secret key.")
-                                .value_name("ACCOUNT_NAME"),
-                        )
-                        .arg(
-                            Arg::with_name("key")
-                                .takes_value(true)
-                                .required(true)
-                                .help("Enter the secret key that be provided by AWS IAM.")
-                                .value_name("SECRET"),
-                        ),
-                )
-                .subcommand(SubCommand::with_name("list").about("Show registered profile list."))
-                .subcommand(
-                    SubCommand::with_name("remove")
-                        .about("Remove any profile")
-                        .arg(
-                            Arg::with_name("profile_name")
-                                .takes_value(true)
-                                .required(true)
-                                .help("Enter a profile name that you want to remove.")
-                                .value_name("PROFILE"),
-                        ),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("show") // TODO: change sub command name to "code"
-                .about("Show MFA code for the profile.")
-                .arg(
-                    Arg::with_name("watch")
-                        .short("-w")
-                        .long("--watch")
-                        .help("After showing code, watch for changes."),
-                )
-                .arg(
-                    Arg::with_name("profile_name")
-                        .takes_value(true)
-                        .required(true)
-                        .help("Enter the profile name you want to check.")
-                        .value_name("PROFILE"),
-                ),
-        )
-}
-
-fn profile_add(mfa: &mut Mfa, add_args: &ArgMatches) {
-    let account_name = add_args.value_of("account_name").unwrap();
-    let key = add_args.value_of("key").unwrap();
-    if let Err(err) = mfa.register_profile(account_name, key) {
+fn profile_add(mfa: &mut Mfa, args: &Add) {
+    if let Err(err) = mfa.register_profile(&args.account_name, &args.key) {
         eprintln!("failed to registring profile: {}", err);
         process::exit(3);
     };
@@ -125,10 +116,8 @@ fn profile_list(mfa: &Mfa) {
     process::exit(0);
 }
 
-fn profile_remove(mfa: &mut Mfa, remove_args: &ArgMatches) {
-    let account_name = remove_args.value_of("profile_name").unwrap();
-
-    if let Err(err) = mfa.remove_profile(account_name) {
+fn profile_remove(mfa: &mut Mfa, args: &Remove) {
+    if let Err(err) = mfa.remove_profile(&args.profile) {
         eprintln!("failed remove profile: {}", err);
         process::exit(5);
     }
@@ -145,14 +134,13 @@ fn dump_config(mfa: &Mfa) {
     }
 }
 
-fn show(mfa: &Mfa, args: &ArgMatches) {
-    let profile_name = args.value_of("profile_name").unwrap();
-    let is_watch = 0 < args.occurrences_of("watch");
+fn show(mfa: &Mfa, args: &Show) {
+    let profile = &args.profile;
 
-    let secret = match mfa.get_secret_by_name(profile_name) {
+    let secret = match mfa.get_secret_by_name(&args.profile) {
         Some(secret) => secret,
         None => {
-            eprintln!("can't get the secret that profile: {}", profile_name);
+            eprintln!("can't get the secret that profile: {}", profile);
             process::exit(4);
         }
     };
@@ -165,7 +153,7 @@ fn show(mfa: &Mfa, args: &ArgMatches) {
         print!("{}", code);
         io::stdout().flush().unwrap();
 
-        if is_watch {
+        if args.watch {
             thread::sleep(time::Duration::from_secs(1));
             print!("\r");
         } else {
