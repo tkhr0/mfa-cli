@@ -2,16 +2,14 @@ bin.name = "mfa-cli"
 args = ["profile", "add", "--help"]
 
 stdout = """
-mfa-cli-profile-add 
 Add a new profile
 
-USAGE:
-    mfa-cli profile add <ACCOUNT_NAME> <KEY>
+Usage: mfa-cli profile add <ACCOUNT_NAME> <KEY>
 
-ARGS:
-    <ACCOUNT_NAME>    Enter a profile name as a label to manage your secret key
-    <KEY>             Enter the secret key that be provided by AWS IAM
+Arguments:
+  <ACCOUNT_NAME>  Enter a profile name as a label to manage your secret key
+  <KEY>           Enter the secret key that be provided by AWS IAM
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help
 """

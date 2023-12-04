@@ -2,12 +2,10 @@ bin.name = "mfa-cli"
 args = ["profile", "list", "--help"]
 
 stdout = """
-mfa-cli-profile-list 
 Show registered profile list
 
-USAGE:
-    mfa-cli profile list
+Usage: mfa-cli profile list
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help
 """
