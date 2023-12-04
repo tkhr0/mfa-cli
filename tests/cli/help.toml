@@ -3,21 +3,24 @@ args = ["help"]
 
 stdout = """
 MFA CLI 0.2.1
-It's a MFA code manager.  You can manage MFA accounts and its secret code in command line.
+It's a MFA code manager. You can manage MFA accounts and its secret code in command line.
 
 USAGE:
     mfa-cli [SUBCOMMAND]
 
-You can get help by running this command.
-$ mfa-cli help
+OPTIONS:
+    -h, --help
+            Print help information
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+    -V, --version
+            Print version information
 
 SUBCOMMANDS:
-    help       Prints this message or the help of the given subcommand(s)
-    profile    You will manage profiles.
-    show       Show MFA code for the profile.
+    help
+            Print this message or the help of the given subcommand(s)
+    profile
+            You will manage profiles
+    show
+            Show MFA code for the profile
 """
 stderr = ""
