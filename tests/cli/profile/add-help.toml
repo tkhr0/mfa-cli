@@ -1,0 +1,15 @@
+bin.name = "mfa-cli"
+args = ["profile", "add", "--help"]
+
+stdout = """
+Add a new profile
+
+Usage: mfa-cli profile add <ACCOUNT_NAME> <KEY>
+
+Arguments:
+  <ACCOUNT_NAME>  Enter a profile name as a label to manage your secret key
+  <KEY>           Enter the secret key that be provided by AWS IAM
+
+Options:
+  -h, --help  Print help
+"""

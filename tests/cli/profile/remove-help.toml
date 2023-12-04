@@ -1,0 +1,14 @@
+bin.name = "mfa-cli"
+args = ["profile", "remove", "--help"]
+
+stdout = """
+Remove any profile
+
+Usage: mfa-cli profile remove <PROFILE>
+
+Arguments:
+  <PROFILE>  Enter a profile name that you want to remove
+
+Options:
+  -h, --help  Print help
+"""
