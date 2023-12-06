@@ -49,7 +49,7 @@ struct Show {
     #[clap(value_parser)]
     /// Enter the profile name you want to check.
     profile: String,
-    #[clap(short, long, action = ArgAction::SetFalse)]
+    #[clap(short, long, action = ArgAction::SetTrue)]
     /// After showing code, watch for changes.
     watch: bool,
 }
